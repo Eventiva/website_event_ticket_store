@@ -27,5 +27,7 @@ class EventEventTicket(models.Model):
                 ('service_tracking', '=', 'event'),
                 ('event_ticket_id', '=', ticket.id)
             ])
-            for product in products:
-                product.list_price = ticket.price
+            # Use context flag to prevent recursion
+            products.with_context(skip_price_sync=True).write({
+                'list_price': ticket.price
+            })

@@ -48,7 +48,10 @@ class ProductTemplate(models.Model):
         """Sync product price with event ticket price"""
         for product in self:
             if product.service_tracking == 'event' and product.event_ticket_id:
-                product.list_price = product.event_ticket_id.price
+                # Use context flag to prevent recursion
+                product.with_context(skip_price_sync=True).write({
+                    'list_price': product.event_ticket_id.price
+                })
 
     def _update_price_from_event_ticket(self, event_ticket):
         """Update price when event ticket price changes"""
@@ -57,19 +60,29 @@ class ProductTemplate(models.Model):
             ('event_ticket_id', '=', event_ticket.id)
         ])
         for product in products:
-            product.list_price = event_ticket.price
+            # Use context flag to prevent recursion
+            product.with_context(skip_price_sync=True).write({
+                'list_price': event_ticket.price
+            })
 
     @api.model
     def create(self, vals):
         """Override create to sync price with event ticket"""
         product = super().create(vals)
-        product._sync_event_ticket_price()
+        # Only sync if not already setting list_price in vals
+        if 'list_price' not in vals:
+            product._sync_event_ticket_price()
         return product
 
     def write(self, vals):
         """Override write to sync price with event ticket"""
         result = super().write(vals)
-        self._sync_event_ticket_price()
+        # Skip price sync if we're already syncing or if list_price is being updated
+        if not self.env.context.get('skip_price_sync') and 'list_price' not in vals:
+            # Only sync if it's an event product
+            event_products = self.filtered(lambda p: p.service_tracking == 'event')
+            if event_products:
+                event_products._sync_event_ticket_price()
         return result
 
     def _get_event_info(self):
