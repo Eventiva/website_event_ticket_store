@@ -8,8 +8,8 @@
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='service_tracking']" position="after">
-                    <field name="event_id" attrs="{'invisible': [('service_tracking', '!=', 'event')], 'required': [('service_tracking', '=', 'event')]}"/>
-                    <field name="event_ticket_id" attrs="{'invisible': [('service_tracking', '!=', 'event')], 'required': [('service_tracking', '=', 'event')]}"/>
+                    <field name="event_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
+                    <field name="event_ticket_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                 </xpath>
             </field>
         </record>
@@ -53,8 +53,8 @@
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='service_tracking']" position="after">
-                    <field name="event_id" attrs="{'invisible': [('service_tracking', '!=', 'event')], 'required': [('service_tracking', '=', 'event')]}"/>
-                    <field name="event_ticket_id" attrs="{'invisible': [('service_tracking', '!=', 'event')], 'required': [('service_tracking', '=', 'event')]}"/>
+                    <field name="event_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
+                    <field name="event_ticket_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                 </xpath>
             </field>
         </record>
