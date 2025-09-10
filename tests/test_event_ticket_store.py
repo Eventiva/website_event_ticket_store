@@ -13,8 +13,8 @@ class TestEventTicketStore(TransactionCase):
         # Create test event
         self.event = self.env['event.event'].create({
             'name': 'Test Event',
-            'date_begin': '2024-12-31 10:00:00',
-            'date_end': '2024-12-31 18:00:00',
+            'date_begin': '2025-12-31 10:00:00',
+            'date_end': '2025-12-31 18:00:00',
         })
 
         # Create test event ticket
@@ -22,6 +22,7 @@ class TestEventTicketStore(TransactionCase):
             'name': 'VIP Ticket',
             'event_id': self.event.id,
             'price': 100.0,
+            'sale_available': True,
         })
 
         # Create test product with event configuration
