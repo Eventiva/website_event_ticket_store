@@ -86,7 +86,7 @@
 
         <!-- Override Cart Template to show event info -->
         <template id="cart_template_event_info" inherit_id="website_sale.cart_lines" name="Cart Template Event Info">
-            <xpath expr="//div[hasclass('o_cart_product')]" position="inside">
+            <xpath expr="//div[@t-foreach='website_sale_order.website_order_line']" position="inside">
                 <div t-if="line.event_id and line.event_ticket_id" class="event-info-cart mt-2">
                     <small class="text-muted">
                         <i class="fa fa-calendar"></i> <span t-field="line.event_id.name"/>
