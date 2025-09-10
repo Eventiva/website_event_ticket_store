@@ -27,17 +27,6 @@
             </field>
         </record>
 
-        <!-- Sale Order Form View -->
-        <record id="view_order_form_event_ticket" model="ir.ui.view">
-            <field name="name">sale.order.form.event.ticket</field>
-            <field name="model">sale.order</field>
-            <field name="inherit_id" ref="sale.view_order_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='order_line']" position="attributes">
-                    <attribute name="context">{'default_event_id': event_id, 'default_event_ticket_id': event_ticket_id}</attribute>
-                </xpath>
-            </field>
-        </record>
     </data>
 </odoo>
 
