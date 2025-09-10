@@ -31,9 +31,11 @@ class ProductTemplate(models.Model):
 
     @api.onchange('event_ticket_id')
     def _onchange_event_ticket_id(self):
-        """Set event when ticket is selected"""
+        """Set event and price when ticket is selected"""
         if self.event_ticket_id:
             self.event_id = self.event_ticket_id.event_id
+            # Update the list price to match the event ticket price
+            self.list_price = self.event_ticket_id.price
 
     @api.onchange('service_tracking')
     def _onchange_service_tracking(self):
@@ -41,6 +43,34 @@ class ProductTemplate(models.Model):
         if self.service_tracking != 'event':
             self.event_id = False
             self.event_ticket_id = False
+
+    def _sync_event_ticket_price(self):
+        """Sync product price with event ticket price"""
+        for product in self:
+            if product.service_tracking == 'event' and product.event_ticket_id:
+                product.list_price = product.event_ticket_id.price
+
+    def _update_price_from_event_ticket(self, event_ticket):
+        """Update price when event ticket price changes"""
+        products = self.search([
+            ('service_tracking', '=', 'event'),
+            ('event_ticket_id', '=', event_ticket.id)
+        ])
+        for product in products:
+            product.list_price = event_ticket.price
+
+    @api.model
+    def create(self, vals):
+        """Override create to sync price with event ticket"""
+        product = super().create(vals)
+        product._sync_event_ticket_price()
+        return product
+
+    def write(self, vals):
+        """Override write to sync price with event ticket"""
+        result = super().write(vals)
+        self._sync_event_ticket_price()
+        return result
 
     def _get_event_info(self):
         """Get event information for display purposes"""
