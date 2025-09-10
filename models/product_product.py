@@ -30,3 +30,4 @@ class ProductProduct(models.Model):
             return False
 
         return True
+

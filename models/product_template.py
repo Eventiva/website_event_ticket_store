@@ -59,3 +59,4 @@ class ProductTemplate(models.Model):
             'seats_limited': self.event_ticket_id.seats_limited,
             'ticket_description': self.event_ticket_id.description or '',
         }
+
