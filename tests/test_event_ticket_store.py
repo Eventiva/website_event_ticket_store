@@ -61,7 +61,10 @@ class TestEventTicketStore(TransactionCase):
         self.assertTrue(self.product._is_event_ticket_available())
 
         # Test expired event
-        self.event.date_end = '2020-01-01 18:00:00'
+        self.event.write({
+            'date_begin': '2020-01-01 10:00:00',
+            'date_end': '2020-01-01 18:00:00'
+        })
         self.assertFalse(self.product._is_event_ticket_available())
 
     def test_sale_order_line_auto_population(self):
