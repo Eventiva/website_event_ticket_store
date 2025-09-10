@@ -60,3 +60,23 @@ class ProductTemplate(models.Model):
             'ticket_description': self.event_ticket_id.description or '',
         }
 
+    def _is_event_ticket_available(self):
+        """Check if the event ticket is available for purchase"""
+        self.ensure_one()
+        if not self.event_ticket_id:
+            return False
+
+        # Check if ticket is available for sale
+        if not self.event_ticket_id.sale_available:
+            return False
+
+        # Check if event is not expired
+        if self.event_ticket_id.event_id.date_end and self.event_ticket_id.event_id.date_end.date() < fields.Date.today():
+            return False
+
+        # Check seat availability if limited
+        if self.event_ticket_id.seats_limited and self.event_ticket_id.seats_available <= 0:
+            return False
+
+        return True
+
