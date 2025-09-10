@@ -51,10 +51,10 @@
 
         <!-- Override Add to Cart Button for Event Products -->
         <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
-            <xpath expr="//a[hasclass('btn-primary') and hasclass('a-submit')]" position="attributes">
+            <xpath expr="//a[@id='add_to_cart']" position="attributes">
                 <attribute name="t-if">product.service_tracking != 'event' or (product.service_tracking == 'event' and product.event_id and product.event_ticket_id and product._is_event_ticket_available())</attribute>
             </xpath>
-            <xpath expr="//a[hasclass('btn-primary') and hasclass('a-submit')]" position="after">
+            <xpath expr="//a[@id='add_to_cart']" position="after">
                 <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.event_ticket_id)" class="alert alert-warning">
                     <strong>Event Product:</strong> This product is not properly configured. Please contact the administrator.
                 </div>
@@ -86,7 +86,7 @@
 
         <!-- Override Cart Template to show event info -->
         <template id="cart_template_event_info" inherit_id="website_sale.cart" name="Cart Template Event Info">
-            <xpath expr="//td[hasclass('td-product')]" position="after">
+            <xpath expr="//td[hasclass('td-product_name')]" position="after">
                 <td t-if="line.event_id and line.event_ticket_id" class="td-event-info">
                     <div class="event-info-cart">
                         <small class="text-muted">
