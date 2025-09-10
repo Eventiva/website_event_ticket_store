@@ -5,11 +5,11 @@
         <record id="view_order_form_event_ticket" model="ir.ui.view">
             <field name="name">sale.order.line.form.event.ticket</field>
             <field name="model">sale.order.line</field>
-            <field name="inherit_id" ref="sale.view_order_line_form2"/>
+            <field name="inherit_id" ref="sale.sale_order_line_view_form_readonly"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='product_id']" position="after">
-                    <field name="event_id" invisible="product_id.service_tracking != 'event'" required="product_id.service_tracking == 'event'"/>
-                    <field name="event_ticket_id" invisible="product_id.service_tracking != 'event'" required="product_id.service_tracking == 'event'"/>
+                    <field name="event_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
+                    <field name="event_ticket_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                 </xpath>
             </field>
         </record>
