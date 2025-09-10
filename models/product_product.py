@@ -22,7 +22,7 @@ class ProductProduct(models.Model):
             return False
 
         # Check if event is not expired
-        if self.event_ticket_id.event_id.date_end and self.event_ticket_id.event_id.date_end < fields.Date.today():
+        if self.event_ticket_id.event_id.date_end and self.event_ticket_id.event_id.date_end.date() < fields.Date.today():
             return False
 
         # Check seat availability if limited

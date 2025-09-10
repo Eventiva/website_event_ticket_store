@@ -65,12 +65,30 @@ class TestEventTicketStore(TransactionCase):
 
     def test_sale_order_line_auto_population(self):
         """Test that sale order line automatically gets event data from product"""
-        # Create sale order line
+        # Create sale order line with required event fields
         line = self.env['sale.order.line'].create({
             'order_id': self.sale_order.id,
             'product_id': self.product.id,
             'product_uom_qty': 1,
+            'event_id': self.event.id,
+            'event_ticket_id': self.event_ticket.id,
         })
+
+        # Check that event fields are set correctly
+        self.assertEqual(line.event_id, self.event)
+        self.assertEqual(line.event_ticket_id, self.event_ticket)
+
+    def test_sale_order_line_onchange_method(self):
+        """Test that sale order line onchange method works correctly"""
+        # Create sale order line without event fields
+        line = self.env['sale.order.line'].new({
+            'order_id': self.sale_order.id,
+            'product_id': self.product.id,
+            'product_uom_qty': 1,
+        })
+
+        # Call the onchange method
+        line._onchange_product_id_event_ticket()
 
         # Check that event fields are automatically populated
         self.assertEqual(line.event_id, self.event)
@@ -122,24 +140,24 @@ class TestEventTicketStore(TransactionCase):
 
     def test_product_onchange_methods(self):
         """Test product onchange methods"""
-        # Test service_tracking onchange
-        self.product.service_tracking = 'no'
-        self.product._onchange_service_tracking()
-        self.assertFalse(self.product.event_id)
-        self.assertFalse(self.product.event_ticket_id)
+        # Test service_tracking onchange on template
+        self.product.product_tmpl_id.service_tracking = 'no'
+        self.product.product_tmpl_id._onchange_service_tracking()
+        self.assertFalse(self.product.product_tmpl_id.event_id)
+        self.assertFalse(self.product.product_tmpl_id.event_ticket_id)
 
-        # Test event_id onchange
-        self.product.service_tracking = 'event'
-        self.product.event_id = self.event
-        self.product._onchange_event_id()
+        # Test event_id onchange on template
+        self.product.product_tmpl_id.service_tracking = 'event'
+        self.product.product_tmpl_id.event_id = self.event
+        self.product.product_tmpl_id._onchange_event_id()
         # Should clear ticket if it doesn't belong to event
-        if self.product.event_ticket_id and self.product.event_ticket_id.event_id != self.event:
-            self.assertFalse(self.product.event_ticket_id)
+        if self.product.product_tmpl_id.event_ticket_id and self.product.product_tmpl_id.event_ticket_id.event_id != self.event:
+            self.assertFalse(self.product.product_tmpl_id.event_ticket_id)
 
-        # Test event_ticket_id onchange
-        self.product.event_ticket_id = self.event_ticket
-        self.product._onchange_event_ticket_id()
-        self.assertEqual(self.product.event_id, self.event)
+        # Test event_ticket_id onchange on template
+        self.product.product_tmpl_id.event_ticket_id = self.event_ticket
+        self.product.product_tmpl_id._onchange_event_ticket_id()
+        self.assertEqual(self.product.product_tmpl_id.event_id, self.event)
 
     def test_sale_order_line_event_info(self):
         """Test getting event info from sale order line"""
@@ -147,6 +165,8 @@ class TestEventTicketStore(TransactionCase):
             'order_id': self.sale_order.id,
             'product_id': self.product.id,
             'product_uom_qty': 1,
+            'event_id': self.event.id,
+            'event_ticket_id': self.event_ticket.id,
         })
 
         event_info = line._get_event_info()
