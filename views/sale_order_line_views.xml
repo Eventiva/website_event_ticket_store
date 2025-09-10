@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Sale Order Line Form View -->
+        <record id="view_order_form_event_ticket" model="ir.ui.view">
+            <field name="name">sale.order.line.form.event.ticket</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.view_order_line_form2"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='product_id']" position="after">
+                    <field name="event_id" attrs="{'invisible': [('product_id.service_tracking', '!=', 'event')], 'required': [('product_id.service_tracking', '=', 'event')]}"/>
+                    <field name="event_ticket_id" attrs="{'invisible': [('product_id.service_tracking', '!=', 'event')], 'required': [('product_id.service_tracking', '=', 'event')]}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Sale Order Line Tree View -->
+        <record id="view_order_line_tree_event_ticket" model="ir.ui.view">
+            <field name="name">sale.order.line.tree.event.ticket</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.view_order_line_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='product_id']" position="after">
+                    <field name="event_id" optional="hide"/>
+                    <field name="event_ticket_id" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Sale Order Form View -->
+        <record id="view_order_form_event_ticket" model="ir.ui.view">
+            <field name="name">sale.order.form.event.ticket</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']" position="attributes">
+                    <attribute name="context">{'default_event_id': event_id, 'default_event_ticket_id': event_ticket_id}</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Override Product Template to show event information -->
+        <template id="product_template_event_info" inherit_id="website_sale.product" name="Product Template Event Info">
+            <xpath expr="//div[hasclass('oe_structure')]" position="inside">
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="event-info mt-3">
+                    <div class="card event-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fa fa-calendar"></i> Event Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="card-title" t-field="product.event_id.name"/>
+                                    <p class="card-text">
+                                        <i class="fa fa-calendar"></i>
+                                        <span t-field="product.event_id.date_begin" t-options="{'widget': 'datetime'}"/>
+                                        <span t-if="product.event_id.date_end and product.event_id.date_begin != product.event_id.date_end">
+                                            - <span t-field="product.event_id.date_end" t-options="{'widget': 'datetime'}"/>
+                                        </span>
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Ticket Type:</strong> <span t-field="product.event_ticket_id.name"/>
+                                    </p>
+                                    <p t-if="product.event_ticket_id.description" class="card-text">
+                                        <span t-field="product.event_ticket_id.description"/>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <div class="ticket-availability">
+                                        <span t-if="product.event_ticket_id.seats_limited" class="badge badge-info">
+                                            <span t-esc="product.event_ticket_id.seats_available"/> seats available
+                                        </span>
+                                        <span t-else="" class="badge badge-success">
+                                            Unlimited seats
+                                        </span>
+                                    </div>
+                                    <div t-if="not product._is_event_ticket_available()" class="alert alert-warning mt-2">
+                                        <small>This ticket is no longer available</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </template>
+
+        <!-- Override Add to Cart Button for Event Products -->
+        <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
+            <xpath expr="//button[hasclass('btn-primary') and contains(@class, 'a-submit')]" position="attributes">
+                <attribute name="t-if">product.service_tracking != 'event' or (product.service_tracking == 'event' and product.event_id and product.event_ticket_id and product._is_event_ticket_available())</attribute>
+            </xpath>
+            <xpath expr="//button[hasclass('btn-primary') and contains(@class, 'a-submit')]" position="after">
+                <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.event_ticket_id)" class="alert alert-warning">
+                    <strong>Event Product:</strong> This product is not properly configured. Please contact the administrator.
+                </div>
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id and not product._is_event_ticket_available()" class="alert alert-danger">
+                    <strong>Sold Out:</strong> This event ticket is no longer available for purchase.
+                </div>
+            </xpath>
+        </template>
+
+        <!-- Override Product List Template to show event info -->
+        <template id="product_template_event_list" inherit_id="website_sale.products" name="Product Template Event List">
+            <xpath expr="//div[hasclass('oe_product')]" position="inside">
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="event-info-small mt-2">
+                    <small class="text-muted">
+                        <i class="fa fa-calendar"></i>
+                        <span t-field="product.event_id.name"/>
+                        <span t-if="product.event_id.date_begin"> - <span t-field="product.event_id.date_begin" t-options="{'widget': 'date'}"/></span>
+                    </small>
+                    <br/>
+                    <small class="text-muted">
+                        <i class="fa fa-ticket"></i> <span t-field="product.event_ticket_id.name"/>
+                        <span t-if="product.event_ticket_id.seats_limited" class="badge badge-sm badge-info ml-1">
+                            <span t-esc="product.event_ticket_id.seats_available"/> left
+                        </span>
+                    </small>
+                </div>
+            </xpath>
+        </template>
+
+        <!-- Override Cart Template to show event info -->
+        <template id="cart_template_event_info" inherit_id="website_sale.cart" name="Cart Template Event Info">
+            <xpath expr="//td[hasclass('td-product')]" position="after">
+                <td t-if="line.event_id and line.event_ticket_id" class="td-event-info">
+                    <div class="event-info-cart">
+                        <small class="text-muted">
+                            <i class="fa fa-calendar"></i> <span t-field="line.event_id.name"/>
+                        </small>
+                        <br/>
+                        <small class="text-muted">
+                            <i class="fa fa-ticket"></i> <span t-field="line.event_ticket_id.name"/>
+                        </small>
+                    </div>
+                </td>
+            </xpath>
+        </template>
+
+        <!-- CSS for Event Information Display -->
+        <template id="event_info_css" name="Event Info CSS">
+            <style>
+                .event-card {
+                    border: 1px solid #007bff;
+                    border-radius: 0.375rem;
+                }
+
+                .event-card .card-header {
+                    background-color: #007bff !important;
+                    border-bottom: 1px solid #007bff;
+                }
+
+                .event-info-small {
+                    font-size: 0.875rem;
+                }
+
+                .event-info-cart {
+                    font-size: 0.875rem;
+                }
+
+                .ticket-availability .badge {
+                    font-size: 0.75rem;
+                }
+
+                .event-info .alert {
+                    margin-bottom: 0;
+                    padding: 0.5rem;
+                }
+            </style>
+        </template>
+    </data>
+</odoo>
