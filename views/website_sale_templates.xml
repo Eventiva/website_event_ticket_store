@@ -65,8 +65,8 @@
         </template>
 
         <!-- Override Product List Template to show event info -->
-        <template id="product_template_event_list" inherit_id="website_sale.products" name="Product Template Event List">
-            <xpath expr="//div[hasclass('o_wsale_product_grid_wrapper')]" position="inside">
+        <template id="product_template_event_list" inherit_id="website_sale.products_item" name="Product Template Event List">
+            <xpath expr="//form[@class='oe_product_cart']" position="inside">
                 <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="event-info-small mt-2">
                     <small class="text-muted">
                         <i class="fa fa-calendar"></i>
