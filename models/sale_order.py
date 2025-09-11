@@ -8,7 +8,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     def _cart_update(self, product_id, line_id=None, add_qty=0, set_qty=0, **kwargs):
-        """Override to handle event ticket validation"""
+        """Override to handle event ticket validation and attendee collection"""
         self.ensure_one()
 
         # Check if this is an event product
@@ -32,7 +32,51 @@ class SaleOrder(models.Model):
             # knows we're adding a new ticket rather than increasing quantity
             kwargs['event_ticket_id'] = product.event_ticket_id.id
 
-        return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
+        # Perform the cart update
+        result = super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
+
+        # If this is an event product and we're adding tickets (not removing),
+        # trigger the attendee information collection
+        if (product.service_tracking == 'event' and
+            product.event_id and product.event_ticket_id and
+            (add_qty > 0 or set_qty > 0)):
+
+            # Check if we need to collect attendee information
+            if self._should_collect_attendee_info(product_id, add_qty, set_qty):
+                # Return the registration editor action instead of normal cart update result
+                return self._get_registration_editor_action()
+
+        return result
+
+    def _should_collect_attendee_info(self, product_id, add_qty, set_qty):
+        """Determine if we need to collect attendee information for this cart update"""
+        # Only collect attendee info when adding new tickets, not when removing
+        if add_qty > 0 or set_qty > 0:
+            # Check if this is a new line or if we're adding to an existing line
+            existing_line = self.order_line.filtered(
+                lambda l: l.product_id.id == product_id and l.event_ticket_id
+            )
+            if not existing_line:
+                # This is a new event ticket line, collect attendee info
+                return True
+            elif add_qty > 0:
+                # We're adding more tickets to an existing line, collect attendee info for new ones
+                return True
+        return False
+
+    def _get_registration_editor_action(self):
+        """Return the registration editor action to collect attendee information"""
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'registration.editor',
+            'view_mode': 'form',
+            'view_id': self.env.ref('website_event_ticket_store.view_event_registration_editor_cart_form').id,
+            'target': 'new',
+            'context': {
+                'default_sale_order_id': self.id,
+                'from_cart': True,  # Flag to indicate this came from cart
+            }
+        }
 
     def _prepare_order_line_values(self, product_id, quantity, **kwargs):
         """Override to automatically set event ticket values from product"""

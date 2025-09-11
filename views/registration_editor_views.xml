@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Custom Registration Editor View for Cart Flow -->
+        <record id="view_event_registration_editor_cart_form" model="ir.ui.view">
+            <field name="name">registration.editor.cart.form</field>
+            <field name="model">registration.editor</field>
+            <field name="inherit_id" ref="event_sale.view_event_registration_editor_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//p" position="replace">
+                    <p t-if="from_cart">
+                        Please provide attendee details for the event tickets you just added to your cart.
+                    </p>
+                    <p t-else="">
+                        Before updating the linked registrations of <field name="sale_order_id" readonly="1" class="oe_inline"/>
+                        please provide attendee details.
+                    </p>
+                </xpath>
+                <xpath expr="//button[@name='action_make_registration']" position="attributes">
+                    <attribute name="string" t-if="from_cart">Continue to Cart</attribute>
+                    <attribute name="string" t-else="">Create/Update registrations</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
