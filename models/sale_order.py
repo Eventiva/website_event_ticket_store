@@ -36,14 +36,17 @@ class SaleOrder(models.Model):
 
     def _prepare_order_line_values(self, product_id, quantity, **kwargs):
         """Override to automatically set event ticket values from product"""
-        values = super()._prepare_order_line_values(product_id, quantity, **kwargs)
-
-        # For event products, automatically set event and ticket from product
+        # For event products, we need to handle the ticket matching differently
         product = self.env['product.product'].browse(product_id)
         if product.service_tracking == 'event' and product.event_id and product.event_ticket_id:
+            # Skip the website_event_sale validation by calling the base sale.order method
+            values = super(SaleOrder, self)._prepare_order_line_values(product_id, quantity, **kwargs)
             values.update({
                 'event_id': product.event_id.id,
                 'event_ticket_id': product.event_ticket_id.id,
             })
+        else:
+            # For non-event products, use the normal flow including website_event_sale
+            values = super()._prepare_order_line_values(product_id, quantity, **kwargs)
 
         return values
