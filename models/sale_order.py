@@ -28,6 +28,10 @@ class SaleOrder(models.Model):
                     "The event may be sold out or expired."
                 ))
 
+            # Pass the event_ticket_id to the parent method so website_event_sale
+            # knows we're adding a new ticket rather than increasing quantity
+            kwargs['event_ticket_id'] = product.event_ticket_id.id
+
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
 
     def _prepare_order_line_values(self, product_id, quantity, **kwargs):
