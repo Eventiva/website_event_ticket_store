@@ -53,8 +53,9 @@
         <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
             <xpath expr="//a[@id='add_to_cart']" position="attributes">
                 <attribute name="t-if">product.service_tracking != 'event' or (product.service_tracking == 'event' and product.event_id and product.event_ticket_id and product._is_event_ticket_available())</attribute>
-                <attribute name="data-bs-toggle">product.service_tracking == 'event' and 'modal' or False</attribute>
-                <attribute name="data-bs-target">product.service_tracking == 'event' and '#event_attendee_modal' or False</attribute>
+                <attribute name="data-bs-toggle">product.service_tracking == 'event' and product.event_id and product.event_ticket_id and 'modal' or False</attribute>
+                <attribute name="data-bs-target">product.service_tracking == 'event' and product.event_id and product.event_ticket_id and '#event_attendee_modal' or False</attribute>
+                <attribute name="href">product.service_tracking == 'event' and product.event_id and product.event_ticket_id and '#' or False</attribute>
             </xpath>
             <xpath expr="//a[@id='add_to_cart']" position="after">
                 <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.event_ticket_id)" class="alert alert-warning">
@@ -68,8 +69,7 @@
 
         <!-- Event Attendee Details Modal -->
         <template id="event_attendee_modal" name="Event Attendee Details Modal">
-            <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id"
-                 class="modal fade" id="event_attendee_modal" tabindex="-1" role="dialog" aria-labelledby="event_attendee_modal_label" aria-hidden="true">
+            <div class="modal fade" id="event_attendee_modal" tabindex="-1" role="dialog" aria-labelledby="event_attendee_modal_label" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <form id="event_attendee_form" method="post" action="/shop/cart/update" class="js_website_submit_form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -82,7 +82,7 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
 
-                            <div class="modal-body">
+                            <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="modal-body">
                                 <div class="alert alert-info">
                                     <strong><span t-field="product.event_id.name"/></strong><br/>
                                     <small>Please provide attendee details for each ticket you're purchasing.</small>
@@ -123,7 +123,7 @@
                                 <input type="hidden" name="1-event_ticket_id" t-att-value="product.event_ticket_id.id"/>
                             </div>
 
-                            <div class="modal-footer border-top">
+                            <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="modal-footer border-top">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fa fa-shopping-cart me-2"></i>Add to Cart
