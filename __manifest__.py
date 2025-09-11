@@ -37,7 +37,6 @@ Technical Details:
         'views/product_template_views.xml',
         'views/sale_order_line_views.xml',
         'views/website_sale_templates.xml',
-        'views/registration_editor_views.xml',
         'security/ir.model.access.csv',
     ],
     'test': [

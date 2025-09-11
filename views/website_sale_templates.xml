@@ -53,6 +53,8 @@
         <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
             <xpath expr="//a[@id='add_to_cart']" position="attributes">
                 <attribute name="t-if">product.service_tracking != 'event' or (product.service_tracking == 'event' and product.event_id and product.event_ticket_id and product._is_event_ticket_available())</attribute>
+                <attribute name="data-bs-toggle">product.service_tracking == 'event' and 'modal' or False</attribute>
+                <attribute name="data-bs-target">product.service_tracking == 'event' and '#event_attendee_modal' or False</attribute>
             </xpath>
             <xpath expr="//a[@id='add_to_cart']" position="after">
                 <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.event_ticket_id)" class="alert alert-warning">
@@ -62,6 +64,75 @@
                     <strong>Sold Out:</strong> This event ticket is no longer available for purchase.
                 </div>
             </xpath>
+        </template>
+
+        <!-- Event Attendee Details Modal -->
+        <template id="event_attendee_modal" name="Event Attendee Details Modal">
+            <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id"
+                 class="modal fade" id="event_attendee_modal" tabindex="-1" role="dialog" aria-labelledby="event_attendee_modal_label" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <form id="event_attendee_form" method="post" action="/shop/cart/update" class="js_website_submit_form">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="modal-content">
+                            <div class="modal-header align-items-center">
+                                <h4 class="modal-title" id="event_attendee_modal_label">
+                                    <i class="fa fa-calendar me-2"></i>
+                                    Event Registration Details
+                                </h4>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <strong><span t-field="product.event_id.name"/></strong><br/>
+                                    <small>Please provide attendee details for each ticket you're purchasing.</small>
+                                </div>
+
+                                <input type="hidden" name="product_id" t-att-value="product.id"/>
+                                <input type="hidden" name="add_qty" value="1"/>
+
+                                <t t-set="counter" t-value="0"/>
+                                <t t-set="input_type_by_question_type" t-value="{'name': 'text', 'email': 'email', 'phone': 'tel', 'company_name': 'text'}"/>
+
+                                <!-- Dynamic Attendee Form based on Event Questions -->
+                                <div class="attendee-form mb-4 p-3 border rounded">
+                                    <h6 class="mb-3">
+                                        <i class="fa fa-user me-2"></i>
+                                        Attendee Details
+                                    </h6>
+
+                                    <!-- Event Questions for this attendee -->
+                                    <div t-if="product.event_id.question_ids" class="row">
+                                        <t t-foreach="product.event_id.question_ids" t-as="question">
+                                            <div class="col-lg-6 mt-2" t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
+                                                <t t-call="website_event.registration_event_question">
+                                                    <t t-set="registration_index" t-value="1"/>
+                                                </t>
+                                            </div>
+                                        </t>
+                                    </div>
+
+                                    <!-- Show message if no questions configured -->
+                                    <div t-if="not product.event_id.question_ids" class="alert alert-info">
+                                        <i class="fa fa-info-circle me-2"></i>
+                                        No attendee questions are configured for this event. The ticket will be added to your cart.
+                                    </div>
+                                </div>
+
+                                <!-- Hidden field for event ticket -->
+                                <input type="hidden" name="1-event_ticket_id" t-att-value="product.event_ticket_id.id"/>
+                            </div>
+
+                            <div class="modal-footer border-top">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-shopping-cart me-2"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </template>
 
         <!-- Override Product List Template to show event info -->
@@ -130,5 +201,6 @@
                 }
             </style>
         </template>
+
     </data>
 </odoo>
