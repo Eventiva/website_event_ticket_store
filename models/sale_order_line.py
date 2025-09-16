@@ -32,6 +32,14 @@ class SaleOrderLine(models.Model):
             self.event_id = False
             self.event_ticket_id = False
 
+    def _get_display_price(self):
+        """Override to use variant price instead of event ticket price"""
+        if self.event_ticket_id and self.event_id:
+            # Use the variant's calculated price (base + attributes) instead of ticket price
+            # This allows attribute pricing to work correctly with event tickets
+            return super()._get_display_price()
+        return super()._get_display_price()
+
     def _get_event_info(self):
         """Get event information for display purposes"""
         self.ensure_one()
