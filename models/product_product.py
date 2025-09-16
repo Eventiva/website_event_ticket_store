@@ -17,16 +17,23 @@ class ProductProduct(models.Model):
         if not self.event_ticket_id:
             return False
 
-        # Check if ticket is available for sale
-        if not self.event_ticket_id.sale_available:
+        ticket = self.event_ticket_id
+        now = fields.Datetime.now()
+
+        # Check if ticket is launched (sale has started)
+        if ticket.start_sale_datetime and ticket.start_sale_datetime > now:
+            return False
+
+        # Check if ticket is expired (sale has ended)
+        if ticket.end_sale_datetime and ticket.end_sale_datetime < now:
             return False
 
         # Check if event is not expired
-        if self.event_ticket_id.event_id.date_end and self.event_ticket_id.event_id.date_end.date() < fields.Date.today():
+        if ticket.event_id.date_end and ticket.event_id.date_end.date() < fields.Date.today():
             return False
 
-        # Check seat availability if limited
-        if self.event_ticket_id.seats_limited and self.event_ticket_id.seats_available <= 0:
+        # Check seat availability if limited (0 means unlimited)
+        if ticket.seats_limited and ticket.seats_available <= 0:
             return False
 
         return True
