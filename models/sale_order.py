@@ -54,9 +54,9 @@ class SaleOrder(models.Model):
                 "The product must be the same as the ticket's product or a variant of it."
             ))
 
-        # Call the base sale.order method to avoid website_event_sale validation
-        # Use the ticket's product_id instead of the variant product_id
-        values = super(SaleOrder, self)._prepare_order_line_values(ticket.product_id.id, quantity, **kwargs)
+        # Bypass website_event_sale validation by calling the base sale.order method directly
+        # This avoids the strict product_id validation in website_event_sale
+        values = super(SaleOrder, self)._prepare_order_line_values(product_id, quantity, **kwargs)
 
         # Add event-specific values
         values.update({
@@ -83,6 +83,6 @@ class SaleOrder(models.Model):
                 "The product must be the same as the ticket's product or a variant of it."
             ))
 
-        # Call the base method with the validated ticket
-        # Use the ticket's product_id instead of the variant product_id
-        return super()._verify_updated_quantity(order_line, ticket.product_id.id, new_qty, event_ticket_id=event_ticket_id, **kwargs)
+        # Bypass website_event_sale validation by calling the base sale.order method directly
+        # This avoids the strict product_id validation in website_event_sale
+        return super(SaleOrder, self)._verify_updated_quantity(order_line, product_id, new_qty, **kwargs)
