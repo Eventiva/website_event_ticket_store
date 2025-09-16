@@ -35,18 +35,54 @@ class SaleOrder(models.Model):
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
 
     def _prepare_order_line_values(self, product_id, quantity, **kwargs):
-        """Override to automatically set event ticket values from product"""
-        # For event products, we need to handle the ticket matching differently
+        """Override to handle product variants with event tickets"""
+        # Get the event_ticket_id from kwargs if provided
+        event_ticket_id = kwargs.get('event_ticket_id')
+
+        if not event_ticket_id:
+            return super()._prepare_order_line_values(product_id, quantity, **kwargs)
+
+        ticket = self.env['event.event.ticket'].browse(event_ticket_id)
         product = self.env['product.product'].browse(product_id)
-        if product.service_tracking == 'event' and product.event_id and product.event_ticket_id:
-            # Skip the website_event_sale validation by calling the base sale.order method
-            values = super(SaleOrder, self)._prepare_order_line_values(product_id, quantity, **kwargs)
-            values.update({
-                'event_id': product.event_id.id,
-                'event_ticket_id': product.event_ticket_id.id,
-            })
-        else:
-            # For non-event products, use the normal flow including website_event_sale
-            values = super()._prepare_order_line_values(product_id, quantity, **kwargs)
+
+        # Enhanced validation: Allow product variants to work with the same event ticket
+        # Check if the product is a variant of the ticket's product or matches exactly
+        if (ticket.product_id.id != product_id and
+            ticket.product_id.product_tmpl_id.id != product.product_tmpl_id.id):
+            raise UserError(_(
+                "The ticket doesn't match with this product. "
+                "The product must be the same as the ticket's product or a variant of it."
+            ))
+
+        # Call the base sale.order method to avoid website_event_sale validation
+        # Use the ticket's product_id instead of the variant product_id
+        values = super(SaleOrder, self)._prepare_order_line_values(ticket.product_id.id, quantity, **kwargs)
+
+        # Add event-specific values
+        values.update({
+            'event_id': ticket.event_id.id,
+            'event_ticket_id': ticket.id,
+            'product_id': product_id,  # Use the variant product_id for the line
+        })
 
         return values
+
+    def _verify_updated_quantity(self, order_line, product_id, new_qty, event_ticket_id=False, **kwargs):
+        """Override to handle product variants in quantity verification"""
+        if not event_ticket_id:
+            return super()._verify_updated_quantity(order_line, product_id, new_qty, **kwargs)
+
+        ticket = self.env['event.event.ticket'].browse(event_ticket_id)
+        product = self.env['product.product'].browse(product_id)
+
+        # Enhanced validation: Allow product variants
+        if (ticket.product_id.id != product_id and
+            ticket.product_id.product_tmpl_id.id != product.product_tmpl_id.id):
+            raise UserError(_(
+                "The ticket doesn't match with this product. "
+                "The product must be the same as the ticket's product or a variant of it."
+            ))
+
+        # Call the base method with the validated ticket
+        # Use the ticket's product_id instead of the variant product_id
+        return super()._verify_updated_quantity(order_line, ticket.product_id.id, new_qty, event_ticket_id, **kwargs)
