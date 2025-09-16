@@ -85,4 +85,4 @@ class SaleOrder(models.Model):
 
         # Call the base method with the validated ticket
         # Use the ticket's product_id instead of the variant product_id
-        return super()._verify_updated_quantity(order_line, ticket.product_id.id, new_qty, event_ticket_id, **kwargs)
+        return super()._verify_updated_quantity(order_line, ticket.product_id.id, new_qty, event_ticket_id=event_ticket_id, **kwargs)
