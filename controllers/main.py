@@ -41,22 +41,80 @@ class WebsiteEventTicketStore(WebsiteSale):
             'is_available': product._is_event_ticket_available(),
         }
 
-    @http.route(['/shop/cart/update'], type='http', auth="public", methods=['POST'], website=True, csrf=False)
-    def cart_update(self, product_id, add_qty=1, set_qty=0, **kw):
-        """Override cart update to handle event attendee data"""
+    @http.route(['/shop/event_attendees'], type='http', auth="public", methods=['GET', 'POST'], website=True, csrf=False)
+    def event_attendees(self, **kw):
+        """Event attendee collection step in checkout process"""
+        order = request.website.sale_get_order()
 
-        # Check if this is an event product with attendee data
-        product = request.env['product.product'].browse(int(product_id))
+        if not order:
+            return request.redirect('/shop/cart')
 
-        if product.service_tracking == 'event' and product.event_id and product.event_ticket_id:
-            # Process attendee data from form fields
-            self._process_event_attendee_data(product, kw, add_qty)
+        # Check if there are any event products in the cart
+        event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        if not event_lines:
+            return request.redirect('/shop/checkout')
 
-        # Call parent method for normal cart update
-        return super().cart_update(product_id, add_qty, set_qty, **kw)
+        if request.httprequest.method == 'POST':
+            # Process attendee data and create registrations
+            self._process_event_attendee_data_from_checkout(order, kw)
+            return request.redirect('/shop/checkout')
+
+        # Render the attendee collection page
+        values = {
+            'website_sale_order': order,
+        }
+        return request.render('website_event_ticket_store.event_attendee_checkout', values)
+
+    def _process_event_attendee_data_from_checkout(self, order, form_data):
+        """Process attendee data from checkout step and create event registrations"""
+
+        # Clear existing registrations for this order
+        order.order_line.mapped('registration_ids').unlink()
+
+        # Process each attendee
+        attendee_counter = 1
+        while f"{attendee_counter}-event_ticket_id" in form_data:
+            event_ticket_id = form_data.get(f"{attendee_counter}-event_ticket_id")
+            sale_order_line_id = form_data.get(f"{attendee_counter}-sale_order_line_id")
+
+            if not event_ticket_id or not sale_order_line_id:
+                attendee_counter += 1
+                continue
+
+            # Get the order line and event ticket
+            order_line = request.env['sale.order.line'].browse(int(sale_order_line_id))
+            event_ticket = request.env['event.event.ticket'].browse(int(event_ticket_id))
+
+            if not order_line.exists() or not event_ticket.exists():
+                attendee_counter += 1
+                continue
+
+            # Extract attendee data from event questions
+            attendee_data = self._extract_attendee_data_from_questions(event_ticket.event_id, form_data, attendee_counter)
+
+            # Create registration with extracted data
+            vals = {
+                'event_id': event_ticket.event_id.id,
+                'event_ticket_id': event_ticket.id,
+                'sale_order_id': order.id,
+                'sale_order_line_id': order_line.id,
+                'name': attendee_data.get('name', ''),
+                'email': attendee_data.get('email', ''),
+                'phone': attendee_data.get('phone', ''),
+                'company_name': attendee_data.get('company_name', ''),
+                'state': 'draft',
+            }
+
+            # Create registration
+            registration = request.env['event.registration'].sudo().create(vals)
+
+            # Process event question answers
+            self._process_event_question_answers(event_ticket.event_id, form_data, registration, attendee_counter)
+
+            attendee_counter += 1
 
     def _process_event_attendee_data(self, product, form_data, quantity):
-        """Process attendee data from form and create event registrations"""
+        """Process attendee data from form and create event registrations (legacy method)"""
 
         # Get the current sale order
         sale_order = request.website.sale_get_order()
@@ -72,7 +130,7 @@ class WebsiteEventTicketStore(WebsiteSale):
             return
 
         # Extract attendee data from event questions
-        attendee_data = self._extract_attendee_data_from_questions(product, form_data)
+        attendee_data = self._extract_attendee_data_from_questions(product.event_id, form_data, 1)
 
         # Create registration with extracted data
         vals = {
@@ -91,19 +149,19 @@ class WebsiteEventTicketStore(WebsiteSale):
         registration = request.env['event.registration'].sudo().create(vals)
 
         # Process event question answers
-        self._process_event_question_answers(product, form_data, registration)
+        self._process_event_question_answers(product.event_id, form_data, registration, 1)
 
-    def _extract_attendee_data_from_questions(self, product, form_data):
+    def _extract_attendee_data_from_questions(self, event, form_data, attendee_counter=1):
         """Extract attendee data from event questions (name, email, phone, company)"""
 
         attendee_data = {}
 
-        if not product.event_id.question_ids:
+        if not event.question_ids:
             return attendee_data
 
         # Look for standard attendee fields in questions
-        for question in product.event_id.question_ids:
-            field_name = f"1-{question.question_type}-{question.id}"
+        for question in event.question_ids:
+            field_name = f"{attendee_counter}-{question.question_type}-{question.id}"
             answer_value = form_data.get(field_name, '').strip()
 
             if not answer_value:
@@ -121,15 +179,15 @@ class WebsiteEventTicketStore(WebsiteSale):
 
         return attendee_data
 
-    def _process_event_question_answers(self, product, form_data, registration):
+    def _process_event_question_answers(self, event, form_data, registration, attendee_counter=1):
         """Process event question answers and create registration answers"""
 
-        if not product.event_id.question_ids or not registration:
+        if not event.question_ids or not registration:
             return
 
         # Process each question
-        for question in product.event_id.question_ids:
-            field_name = f"1-{question.question_type}-{question.id}"
+        for question in event.question_ids:
+            field_name = f"{attendee_counter}-{question.question_type}-{question.id}"
             answer_value = form_data.get(field_name)
 
             if not answer_value:
