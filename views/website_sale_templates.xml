@@ -32,10 +32,10 @@
                                 <div class="col-md-4 text-right">
                                     <div class="ticket-availability">
                                         <span t-if="product.event_ticket_id.seats_limited" class="badge badge-info">
-                                            <span t-esc="product.event_ticket_id.seats_available"/> seats available
+                                            <span t-esc="product.event_ticket_id.seats_available"/> Tickets available
                                         </span>
                                         <span t-else="" class="badge badge-success">
-                                            Unlimited seats
+                                            Unlimited Tickets
                                         </span>
                                     </div>
                                     <div t-if="not product._is_event_ticket_available()" class="alert alert-warning mt-2">
