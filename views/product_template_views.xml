@@ -9,7 +9,6 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='service_tracking']" position="after">
                     <field name="event_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
-                    <field name="event_ticket_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                 </xpath>
             </field>
         </record>
@@ -22,7 +21,6 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='type']" position="after">
                     <field name="event_id" optional="hide"/>
-                    <field name="event_ticket_id" optional="hide"/>
                 </xpath>
             </field>
         </record>
@@ -35,13 +33,12 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='product_tag_ids']" position="after">
                     <field name="event_id" filter_domain="[('event_id', 'ilike', self)]"/>
-                    <field name="event_ticket_id" filter_domain="[('event_ticket_id', 'ilike', self)]"/>
                 </xpath>
                 <xpath expr="//filter[@name='services']" position="after">
                     <separator/>
                     <filter string="Event Products" name="event_products" domain="[('service_tracking', '=', 'event')]"/>
-                    <filter string="Configured Events" name="configured_events" domain="[('service_tracking', '=', 'event'), ('event_id', '!=', False), ('event_ticket_id', '!=', False)]"/>
-                    <filter string="Unconfigured Events" name="unconfigured_events" domain="[('service_tracking', '=', 'event'), '|', ('event_id', '=', False), ('event_ticket_id', '=', False)]"/>
+                    <filter string="Configured Events" name="configured_events" domain="[('service_tracking', '=', 'event'), ('event_id', '!=', False)]"/>
+                    <filter string="Unconfigured Events" name="unconfigured_events" domain="[('service_tracking', '=', 'event'), ('event_id', '=', False)]"/>
                 </xpath>
             </field>
         </record>
@@ -53,7 +50,6 @@
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='service_tracking']" position="after">
-                    <field name="event_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                     <field name="event_ticket_id" invisible="service_tracking != 'event'" required="service_tracking == 'event'"/>
                 </xpath>
             </field>
@@ -66,7 +62,6 @@
             <field name="inherit_id" ref="product.product_product_tree_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='type']" position="after">
-                    <field name="event_id" optional="hide"/>
                     <field name="event_ticket_id" optional="hide"/>
                 </xpath>
             </field>
@@ -79,14 +74,13 @@
             <field name="inherit_id" ref="product.product_search_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='all_product_tag_ids']" position="after">
-                    <field name="event_id" filter_domain="[('event_id', 'ilike', self)]"/>
                     <field name="event_ticket_id" filter_domain="[('event_ticket_id', 'ilike', self)]"/>
                 </xpath>
                 <xpath expr="//filter[@name='services']" position="after">
                     <separator/>
                     <filter string="Event Products" name="event_products" domain="[('service_tracking', '=', 'event')]"/>
-                    <filter string="Configured Events" name="configured_events" domain="[('service_tracking', '=', 'event'), ('event_id', '!=', False), ('event_ticket_id', '!=', False)]"/>
-                    <filter string="Unconfigured Events" name="unconfigured_events" domain="[('service_tracking', '=', 'event'), '|', ('event_id', '=', False), ('event_ticket_id', '=', False)]"/>
+                    <filter string="Configured Events" name="configured_events" domain="[('service_tracking', '=', 'event'), ('event_ticket_id', '!=', False)]"/>
+                    <filter string="Unconfigured Events" name="unconfigured_events" domain="[('service_tracking', '=', 'event'), ('event_ticket_id', '=', False)]"/>
                 </xpath>
             </field>
         </record>
