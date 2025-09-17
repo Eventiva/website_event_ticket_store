@@ -14,6 +14,24 @@ class ProductProduct(models.Model):
         help="Select the specific ticket type for this product variant. Each variant should have its own ticket."
     )
 
+    @api.onchange('product_tmpl_id')
+    def _onchange_product_tmpl_id(self):
+        """Clear event_ticket_id when product template changes"""
+        if not self.product_tmpl_id.event_id:
+            self.event_ticket_id = False
+
+    @api.onchange('event_ticket_id')
+    def _onchange_event_ticket_id(self):
+        """Validate that the selected ticket belongs to the product template's event"""
+        if self.event_ticket_id and self.product_tmpl_id.event_id:
+            if self.event_ticket_id.event_id != self.product_tmpl_id.event_id:
+                return {
+                    'warning': {
+                        'title': _('Invalid Ticket'),
+                        'message': _('The selected ticket does not belong to the event configured for this product template.'),
+                    }
+                }
+
     def _get_event_info(self):
         """Get event information for display purposes"""
         self.ensure_one()
