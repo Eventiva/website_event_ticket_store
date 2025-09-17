@@ -4,7 +4,7 @@
         <!-- Override Product Template to show event information -->
         <template id="product_template_event_info" inherit_id="website_sale.product" name="Product Template Event Info">
             <xpath expr="//div[@id='contact_us_wrapper']" position="before">
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="event-info mt-3">
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id" class="event-info mt-3">
                     <div class="card event-card">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0">
@@ -23,16 +23,16 @@
                                         </span>
                                     </p>
                                     <p class="card-text">
-                                        <strong>Ticket Type:</strong> <span t-field="product.event_ticket_id.name"/>
+                                        <strong>Ticket Type:</strong> <span t-field="product.product_variant_id.event_ticket_id.name"/>
                                     </p>
-                                    <p t-if="product.event_ticket_id.description" class="card-text">
-                                        <span t-field="product.event_ticket_id.description"/>
+                                    <p t-if="product.product_variant_id.event_ticket_id.description" class="card-text">
+                                        <span t-field="product.product_variant_id.event_ticket_id.description"/>
                                     </p>
                                 </div>
                                 <div class="col-md-4 text-right">
                                     <div class="ticket-availability">
-                                        <span t-if="product.event_ticket_id.seats_limited" class="badge badge-info">
-                                            <span t-esc="product.event_ticket_id.seats_available"/> Tickets available
+                                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited" class="badge badge-info">
+                                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available"/> Tickets available
                                         </span>
                                         <span t-else="" class="badge badge-success">
                                             Unlimited Tickets
@@ -52,10 +52,10 @@
         <!-- Override Add to Cart Button for Event Products -->
         <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
             <xpath expr="//a[@id='add_to_cart']" position="after">
-                <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.event_ticket_id)" class="alert alert-warning">
+                <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)" class="alert alert-warning">
                     <strong>Event Product:</strong> This product is not properly configured. Please contact the administrator.
                 </div>
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id and not product._is_event_ticket_available()" class="alert alert-danger">
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id and not product.product_variant_id._is_event_ticket_available()" class="alert alert-danger">
                     <strong>Sold Out:</strong> This event ticket is no longer available for purchase.
                 </div>
             </xpath>
@@ -161,7 +161,7 @@
         <!-- Override Product List Template to show event info -->
         <template id="product_template_event_list" inherit_id="website_sale.products_item" name="Product Template Event List">
             <xpath expr="//form[hasclass('oe_product_cart')]" position="inside">
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.event_ticket_id" class="event-info-small mt-2">
+                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id" class="event-info-small mt-2">
                     <small class="text-muted">
                         <i class="fa fa-calendar"></i>
                         <span t-field="product.event_id.name"/>
@@ -169,9 +169,9 @@
                     </small>
                     <br/>
                     <small class="text-muted">
-                        <i class="fa fa-ticket"></i> <span t-field="product.event_ticket_id.name"/>
-                        <span t-if="product.event_ticket_id.seats_limited" class="badge badge-sm badge-info ml-1">
-                            <span t-esc="product.event_ticket_id.seats_available"/> left
+                        <i class="fa fa-ticket"></i> <span t-field="product.product_variant_id.event_ticket_id.name"/>
+                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited" class="badge badge-sm badge-info ml-1">
+                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available"/> left
                         </span>
                     </small>
                 </div>
