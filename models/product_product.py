@@ -10,7 +10,6 @@ class ProductProduct(models.Model):
     event_ticket_id = fields.Many2one(
         'event.event.ticket',
         string='Event Ticket',
-        domain="[('event_id', '=', product_tmpl_id.event_id)]",
         help="Select the specific ticket type for this product variant. Each variant should have its own ticket."
     )
 
@@ -25,10 +24,11 @@ class ProductProduct(models.Model):
         """Validate that the selected ticket belongs to the product template's event"""
         if self.event_ticket_id and self.product_tmpl_id.event_id:
             if self.event_ticket_id.event_id != self.product_tmpl_id.event_id:
+                self.event_ticket_id = False
                 return {
                     'warning': {
                         'title': _('Invalid Ticket'),
-                        'message': _('The selected ticket does not belong to the event configured for this product template.'),
+                        'message': _('The selected ticket does not belong to the event configured for this product template. Please select a ticket for the correct event.'),
                     }
                 }
 
