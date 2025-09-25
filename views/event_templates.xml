@@ -2,58 +2,31 @@
 <odoo>
     <data>
         <!-- Override Event Registration Button to Redirect to Store -->
-        <template id="event_registration_button_store_redirect" inherit_id="website_event.event_details" name="Event Registration Button Store Redirect">
-            <xpath expr="//a[@id='registration_button']" position="replace">
-                <a t-if="event.redirect_to_store"
-                   t-att-href="event.get_store_redirect_url()"
-                   class="btn btn-primary btn-lg mb-2"
-                   id="registration_button">
+        <template id="event_registration_button_store_redirect" inherit_id="website_event.registration_template" name="Event Registration Button Store Redirect">
+            <xpath expr="//button[contains(text(), 'Register')]" position="replace">
+                <button t-if="event.redirect_to_store and event.event_registrations_open"
+                        t-att-href="event.get_store_redirect_url()"
+                        type="button"
+                        t-attf-class="btn btn-primary {{cta_additional_classes}}"
+                        onclick="window.location.href=this.getAttribute('href')">
                     <i class="fa fa-shopping-cart me-2"></i>
-                    <span t-esc="event.redirect_to_store and 'Buy Tickets' or 'Register'"/>
-                </a>
-                <a t-else=""
-                   t-att-href="'/event/' + str(event.id) + '/register'"
-                   class="btn btn-primary btn-lg mb-2"
-                   id="registration_button">
+                    Buy Tickets
+                </button>
+                <button t-elif="event.event_registrations_open"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal_ticket_registration"
+                        t-attf-class="btn btn-primary {{cta_additional_classes}}">
                     <i class="fa fa-ticket me-2"></i>
                     Register
-                </a>
+                </button>
             </xpath>
         </template>
 
-        <!-- Override Event Registration Button in Event List -->
-        <template id="event_list_registration_button_store_redirect" inherit_id="website_event.event_list_template" name="Event List Registration Button Store Redirect">
-            <xpath expr="//a[contains(@class, 'btn-primary') and contains(@href, '/register')]" position="replace">
-                <a t-if="event.redirect_to_store"
-                   t-att-href="event.get_store_redirect_url()"
-                   class="btn btn-primary">
-                    <i class="fa fa-shopping-cart me-1"></i>
-                    Buy Tickets
-                </a>
-                <a t-else=""
-                   t-att-href="'/event/' + str(event.id) + '/register'"
-                   class="btn btn-primary">
-                    <i class="fa fa-ticket me-1"></i>
-                    Register
-                </a>
-            </xpath>
-        </template>
-
-        <!-- Override Event Registration Button in Event Card -->
-        <template id="event_card_registration_button_store_redirect" inherit_id="website_event.event_card_template" name="Event Card Registration Button Store Redirect">
-            <xpath expr="//a[contains(@class, 'btn-primary') and contains(@href, '/register')]" position="replace">
-                <a t-if="event.redirect_to_store"
-                   t-att-href="event.get_store_redirect_url()"
-                   class="btn btn-primary">
-                    <i class="fa fa-shopping-cart me-1"></i>
-                    Buy Tickets
-                </a>
-                <a t-else=""
-                   t-att-href="'/event/' + str(event.id) + '/register'"
-                   class="btn btn-primary">
-                    <i class="fa fa-ticket me-1"></i>
-                    Register
-                </a>
+        <!-- Override Event List Link to Redirect to Store -->
+        <template id="event_list_link_store_redirect" inherit_id="website_event.events_list" name="Event List Link Store Redirect">
+            <xpath expr="//a[contains(@href, '/register')]" position="attributes">
+                <attribute name="t-att-href">event.redirect_to_store and event.get_store_redirect_url() or '/event/' + str(event.id) + '/register'</attribute>
             </xpath>
         </template>
     </data>
