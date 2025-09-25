@@ -107,11 +107,11 @@
                                                 <span t-if="question.is_mandatory_answer">*</span>
                                                 <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
                                                     <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
-                                                           t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                           t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
                                                            t-att-required="question.is_mandatory_answer"/>
                                                 </t>
                                                 <t t-elif="question.question_type == 'simple_choice'">
-                                                    <select t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                    <select t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
                                                             class="form-select" t-att-required="question.is_mandatory_answer">
                                                         <option value=""/>
                                                         <t t-foreach="question.answer_ids" t-as="answer">
@@ -120,7 +120,7 @@
                                                     </select>
                                                 </t>
                                                 <t t-else="">
-                                                    <textarea class="form-control" t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                    <textarea class="form-control" t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
                                                               t-att-required="question.is_mandatory_answer" rows="3"></textarea>
                                                 </t>
                                             </div>
@@ -157,11 +157,11 @@
                                         <span t-if="question.is_mandatory_answer">*</span>
                                         <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
                                             <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
-                                                   t-att-name="'0-' + question.question_type + '-' + question.id"
+                                                   t-att-name="'0-' + question.question_type + '-' + str(question.id)"
                                                    t-att-required="question.is_mandatory_answer"/>
                                         </t>
                                         <t t-elif="question.question_type == 'simple_choice'">
-                                            <select t-att-name="'0-' + question.question_type + '-' + question.id"
+                                            <select t-att-name="'0-' + question.question_type + '-' + str(question.id)"
                                                     class="form-select" t-att-required="question.is_mandatory_answer">
                                                 <option value=""/>
                                                 <t t-foreach="question.answer_ids" t-as="answer">
@@ -170,7 +170,7 @@
                                             </select>
                                         </t>
                                         <t t-else="">
-                                            <textarea class="form-control" t-att-name="'0-' + question.question_type + '-' + question.id"
+                                            <textarea class="form-control" t-att-name="'0-' + question.question_type + '-' + str(question.id)"
                                                       t-att-required="question.is_mandatory_answer" rows="3"></textarea>
                                         </t>
                                     </div>
