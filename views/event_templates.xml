@@ -23,26 +23,5 @@
             </xpath>
         </template>
 
-        <!-- Override Event Sidebar Button to Redirect to Store -->
-        <template id="event_sidebar_button_store_redirect" inherit_id="website_event.event_description_full" name="Event Sidebar Button Store Redirect">
-            <xpath expr="//aside[@id='o_wevent_event_main_sidebar']//button[contains(@class, 'btn-primary') and contains(text(), 'Register')]" position="replace">
-                <button t-if="event.redirect_to_store and event.event_registrations_open"
-                        type="button"
-                        t-att-href="event.get_store_redirect_url()"
-                        class="btn btn-primary w-100"
-                        onclick="window.location.href=this.getAttribute('href')">
-                    <i class="fa fa-shopping-cart me-2"></i>
-                    Buy Tickets
-                </button>
-                <button t-elif="event.event_registrations_open"
-                        type="button"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modal_ticket_registration"
-                        class="btn btn-primary w-100">
-                    <i class="fa fa-ticket me-2"></i>
-                    Register
-                </button>
-            </xpath>
-        </template>
     </data>
 </odoo>
