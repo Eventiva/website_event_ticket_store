@@ -8,32 +8,24 @@
             <field name="inherit_id" ref="event.view_event_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='event_type_id']" position="after">
-                    <div class="oe_title">
-                        <h2>
-                            <field name="redirect_to_store" widget="boolean_toggle"
-                                   string="Redirect Register Button to Store"
-                                   help="When enabled, the 'Register' button on the event page will redirect to the store page instead of the normal registration flow."/>
-                        </h2>
-                    </div>
+                    <field name="redirect_to_store" widget="boolean_toggle"
+                           string="Redirect Register Button to Store"
+                           help="When enabled, the 'Register' button on the event page will redirect to the store page instead of the normal registration flow."/>
                 </xpath>
 
-                <xpath expr="//field[@name='event_type_id']" position="after">
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_store_products" type="object"
-                                string="View Store Products" class="oe_stat_button"
-                                icon="fa-shopping-cart"
-                                attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
-                    </div>
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_store_products" type="object"
+                            string="View Store Products" class="oe_stat_button"
+                            icon="fa-shopping-cart"
+                            attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
                 </xpath>
 
-                <xpath expr="//group[@name='event_details']" position="inside">
-                    <group name="store_redirect_settings" attrs="{'invisible': [('redirect_to_store', '=', False)]}">
-                        <group name="store_redirect_group">
-                            <field name="store_product_template_id"
-                                   options="{'no_create': True, 'no_open': True}"
-                                   placeholder="Select a product template to redirect to specific product, or leave empty to redirect to general store page"/>
-                        </group>
-                    </group>
+                <xpath expr="//group[@name='right_event_details']" position="inside">
+                    <field name="store_product_template_id"
+                           string="Store Product Template"
+                           options="{'no_create': True, 'no_open': True}"
+                           placeholder="Select a product template to redirect to specific product, or leave empty to redirect to general store page"
+                           attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
                 </xpath>
             </field>
         </record>
