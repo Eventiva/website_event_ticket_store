@@ -30,3 +30,13 @@ class ProductTemplate(models.Model):
             'event_date_begin': self.event_id.date_begin,
             'event_date_end': self.event_id.date_end,
         }
+
+    def _is_event_ticket_available(self):
+        """Check if the event ticket is available for purchase"""
+        self.ensure_one()
+        # For product.template, check the first variant that has an event ticket
+        variant = self.product_variant_ids.filtered('event_ticket_id')[:1]
+        if not variant:
+            return False
+
+        return variant._is_event_ticket_available()
