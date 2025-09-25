@@ -65,7 +65,6 @@
         <template id="event_attendee_checkout" name="Event Attendee Checkout Step">
             <t t-call="website_sale.checkout_layout">
                 <t t-set="show_navigation_button" t-value="False"/>
-                <t t-set="redirect" t-esc="'/shop/event_attendees'"/>
                 <t t-set="oe_structure">
                     <div class="oe_structure" id="oe_structure_website_event_ticket_store_attendees_1"/>
                 </t>

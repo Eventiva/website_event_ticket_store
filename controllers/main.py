@@ -18,14 +18,21 @@ class WebsiteEventTicketStore(WebsiteSale):
 
         # Check if there are event products in the cart
         if order_sudo and order_sudo.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
-            # Check if we're already on the attendee page to avoid infinite redirect
-            if request.httprequest.path != '/shop/event_attendees':
-                # Debug logging
-                import logging
-                _logger = logging.getLogger(__name__)
-                _logger.info(f"Redirecting to attendee collection for order {order_sudo.id}")
-                # Redirect to attendee collection page
-                return request.redirect('/shop/event_attendees')
+            # Only redirect if we're not already on the attendee page
+            current_path = request.httprequest.path
+
+            if current_path != '/shop/event_attendees':
+                # Check if attendee data has already been collected by looking for registrations
+                event_lines = order_sudo.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+                has_registrations = any(line.registration_ids for line in event_lines)
+
+                if not has_registrations:
+                    # Debug logging
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.info(f"Redirecting to attendee collection for order {order_sudo.id}")
+                    # Redirect to attendee collection page
+                    return request.redirect('/shop/event_attendees')
 
         return redirection
 
