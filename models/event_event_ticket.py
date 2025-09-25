@@ -21,13 +21,16 @@ class EventEventTicket(models.Model):
         return result
 
     def _sync_price_to_products(self):
-        """Sync ticket price to all products using this ticket"""
+        """Sync ticket price to all product variants using this ticket"""
         for ticket in self:
-            products = self.env['product.template'].search([
+            # Find product variants that use this ticket
+            variants = self.env['product.product'].search([
                 ('service_tracking', '=', 'event'),
                 ('event_ticket_id', '=', ticket.id)
             ])
-            # Use context flag to prevent recursion
-            products.with_context(skip_price_sync=True).write({
-                'list_price': ticket.price
-            })
+            # Update the list price on the product template for each variant
+            for variant in variants:
+                # Use context flag to prevent recursion
+                variant.product_tmpl_id.with_context(skip_price_sync=True).write({
+                    'list_price': ticket.price
+                })

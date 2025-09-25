@@ -28,9 +28,9 @@ class SaleOrder(models.Model):
                     "The event may be sold out or expired."
                 ))
 
-            # Pass the event_ticket_id to the parent method so website_event_sale
-            # knows we're adding a new ticket rather than increasing quantity
-            kwargs['event_ticket_id'] = product.event_ticket_id.id
+            # Don't pass event_ticket_id to avoid core validation issues
+            # The core system will handle event logic based on the product's service_tracking
+            # Our sale_order_line model will set the event fields via onchange
 
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
 
