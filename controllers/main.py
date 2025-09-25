@@ -25,19 +25,24 @@ class WebsiteEventTicketStore(WebsiteSale):
         if not product or product.service_tracking != 'event':
             return None
 
-        if not product.event_id or not product.event_ticket_id:
+        if not product.event_id:
+            return None
+
+        # Get the first variant that has an event ticket
+        variant = product.product_variant_ids.filtered('event_ticket_id')[:1]
+        if not variant:
             return None
 
         return {
             'event_name': product.event_id.name,
             'event_date_begin': product.event_id.date_begin,
             'event_date_end': product.event_id.date_end,
-            'ticket_name': product.event_ticket_id.name,
-            'ticket_price': product.event_ticket_id.price,
-            'ticket_price_reduce': product.event_ticket_id.price_reduce,
-            'seats_available': product.event_ticket_id.seats_available if product.event_ticket_id.seats_limited else None,
-            'seats_limited': product.event_ticket_id.seats_limited,
-            'ticket_description': product.event_ticket_id.description or '',
+            'ticket_name': variant.event_ticket_id.name,
+            'ticket_price': variant.event_ticket_id.price,
+            'ticket_price_reduce': variant.event_ticket_id.price_reduce,
+            'seats_available': variant.event_ticket_id.seats_available if variant.event_ticket_id.seats_limited else None,
+            'seats_limited': variant.event_ticket_id.seats_limited,
+            'ticket_description': variant.event_ticket_id.description or '',
             'is_available': product._is_event_ticket_available(),
         }
 
@@ -122,8 +127,9 @@ class WebsiteEventTicketStore(WebsiteSale):
             return
 
         # Find the sale order line for this product
+        # Note: This method is legacy and may not work correctly with the new structure
         order_line = sale_order.order_line.filtered(
-            lambda line: line.product_id == product and line.event_ticket_id == product.event_ticket_id
+            lambda line: line.product_id.product_tmpl_id == product
         )
 
         if not order_line:
@@ -133,9 +139,10 @@ class WebsiteEventTicketStore(WebsiteSale):
         attendee_data = self._extract_attendee_data_from_questions(product.event_id, form_data, 1)
 
         # Create registration with extracted data
+        # Note: This method is legacy and may not work correctly with the new structure
         vals = {
             'event_id': product.event_id.id,
-            'event_ticket_id': product.event_ticket_id.id,
+            'event_ticket_id': order_line.event_ticket_id.id if order_line.event_ticket_id else False,
             'sale_order_id': sale_order.id,
             'sale_order_line_id': order_line.id,
             'name': attendee_data.get('name', ''),

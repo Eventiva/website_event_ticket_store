@@ -22,7 +22,7 @@ class ProductTemplate(models.Model):
     def _get_event_info(self):
         """Get event information for display purposes"""
         self.ensure_one()
-        if not self.event_id or not self.event_ticket_id:
+        if not self.event_id:
             return {}
 
         return {

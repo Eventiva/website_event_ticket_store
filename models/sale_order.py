@@ -15,7 +15,7 @@ class SaleOrder(models.Model):
         product = self.env['product.product'].browse(product_id)
         if product.service_tracking == 'event':
             # Validate that the product has event and ticket configured
-            if not product.event_id or not product.event_ticket_id:
+            if not product.product_tmpl_id.event_id or not product.event_ticket_id:
                 raise UserError(_(
                     "This event product is not properly configured. "
                     "Please contact the administrator to set up the event and ticket information."

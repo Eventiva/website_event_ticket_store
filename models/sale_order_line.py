@@ -24,8 +24,8 @@ class SaleOrderLine(models.Model):
     def _onchange_product_id_event_ticket(self):
         """Automatically set event and ticket from product when product changes"""
         if self.product_id and self.product_id.service_tracking == 'event':
-            # Set event and ticket from product
-            self.event_id = self.product_id.event_id
+            # Set event from template and ticket from variant
+            self.event_id = self.product_id.product_tmpl_id.event_id
             self.event_ticket_id = self.product_id.event_ticket_id
         else:
             # Clear event fields for non-event products
