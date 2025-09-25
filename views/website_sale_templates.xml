@@ -65,7 +65,7 @@
         <template id="event_attendee_checkout" name="Event Attendee Checkout Step">
             <t t-call="website_sale.checkout_layout">
                 <t t-set="show_navigation_button" t-value="False"/>
-                <t t-set="redirect" t-value="/shop/event_attendees"/>
+                <t t-set="redirect" t-esc="'/shop/event_attendees'"/>
                 <t t-set="oe_structure">
                     <div class="oe_structure" id="oe_structure_website_event_ticket_store_attendees_1"/>
                 </t>
@@ -103,8 +103,25 @@
                                     <div t-if="order_line.event_id.question_ids" class="row">
                                         <t t-foreach="order_line.event_id.question_ids" t-as="question">
                                             <div class="col-lg-6 mt-2" t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
-                                                <t t-call="website_event.registration_event_question">
-                                                    <t t-set="registration_index" t-value="counter"/>
+                                                <label t-out="question.title"/>
+                                                <span t-if="question.is_mandatory_answer">*</span>
+                                                <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                                    <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
+                                                           t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                           t-att-required="question.is_mandatory_answer"/>
+                                                </t>
+                                                <t t-elif="question.question_type == 'simple_choice'">
+                                                    <select t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                            class="form-select" t-att-required="question.is_mandatory_answer">
+                                                        <option value=""/>
+                                                        <t t-foreach="question.answer_ids" t-as="answer">
+                                                            <option t-out="answer.name" t-att-value="answer.id"/>
+                                                        </t>
+                                                    </select>
+                                                </t>
+                                                <t t-else="">
+                                                    <textarea class="form-control" t-att-name="counter + '-' + question.question_type + '-' + question.id"
+                                                              t-att-required="question.is_mandatory_answer" rows="3"></textarea>
                                                 </t>
                                             </div>
                                         </t>
@@ -117,8 +134,8 @@
                                     </div>
 
                                     <!-- Hidden fields for this attendee -->
-                                    <input type="hidden" t-attf-name="#{counter}-event_ticket_id" t-att-value="order_line.event_ticket_id.id"/>
-                                    <input type="hidden" t-attf-name="#{counter}-sale_order_line_id" t-att-value="order_line.id"/>
+                                    <input type="hidden" t-att-name="counter + '-event_ticket_id'" t-att-value="order_line.event_ticket_id.id"/>
+                                    <input type="hidden" t-att-name="counter + '-sale_order_line_id'" t-att-value="order_line.id"/>
                                 </div>
                             </div>
                         </t>
@@ -136,8 +153,25 @@
                             <div class="row">
                                 <t t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids" t-as="question">
                                     <div class="mt-2" t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
-                                        <t t-call="website_event.registration_event_question">
-                                            <t t-set="registration_index" t-value="0"/>
+                                        <label t-out="question.title"/>
+                                        <span t-if="question.is_mandatory_answer">*</span>
+                                        <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                            <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
+                                                   t-att-name="'0-' + question.question_type + '-' + question.id"
+                                                   t-att-required="question.is_mandatory_answer"/>
+                                        </t>
+                                        <t t-elif="question.question_type == 'simple_choice'">
+                                            <select t-att-name="'0-' + question.question_type + '-' + question.id"
+                                                    class="form-select" t-att-required="question.is_mandatory_answer">
+                                                <option value=""/>
+                                                <t t-foreach="question.answer_ids" t-as="answer">
+                                                    <option t-out="answer.name" t-att-value="answer.id"/>
+                                                </t>
+                                            </select>
+                                        </t>
+                                        <t t-else="">
+                                            <textarea class="form-control" t-att-name="'0-' + question.question_type + '-' + question.id"
+                                                      t-att-required="question.is_mandatory_answer" rows="3"></textarea>
                                         </t>
                                     </div>
                                 </t>

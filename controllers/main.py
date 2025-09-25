@@ -9,6 +9,26 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 class WebsiteEventTicketStore(WebsiteSale):
     """Extend website sale to handle event ticket attendee data"""
 
+    def _check_cart_and_addresses(self, order_sudo):
+        """Override to redirect to attendee collection for event products"""
+        # First check the parent method
+        redirection = super()._check_cart_and_addresses(order_sudo)
+        if redirection:
+            return redirection
+
+        # Check if there are event products in the cart
+        if order_sudo and order_sudo.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
+            # Check if we're already on the attendee page to avoid infinite redirect
+            if request.httprequest.path != '/shop/event_attendees':
+                # Debug logging
+                import logging
+                _logger = logging.getLogger(__name__)
+                _logger.info(f"Redirecting to attendee collection for order {order_sudo.id}")
+                # Redirect to attendee collection page
+                return request.redirect('/shop/event_attendees')
+
+        return redirection
+
     @http.route(['/shop/product/<model("product.template"):product>'], type='http', auth="public", website=True)
     def product(self, product, category='', search='', **kwargs):
         """Override product page to add event information"""
