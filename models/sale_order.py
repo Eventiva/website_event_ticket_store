@@ -8,7 +8,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     def _cart_update(self, product_id, line_id=None, add_qty=0, set_qty=0, **kwargs):
-        """Override to handle event ticket validation"""
+        """Override to handle event ticket validation and ensure event fields are set"""
         self.ensure_one()
 
         # Check if this is an event product
@@ -28,9 +28,38 @@ class SaleOrder(models.Model):
                     "The event may be sold out or expired."
                 ))
 
-            # Don't pass event_ticket_id to avoid core validation issues
-            # The core system will handle event logic based on the product's service_tracking
-            # Our sale_order_line model will set the event fields via onchange
+            # For event products, we need to ensure the event fields are set
+            # We'll do this by calling the parent method and then updating the line
+            result = super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
+
+            # After the line is created/updated, ensure event fields are set
+            if line_id:
+                # Updating existing line
+                line = self.order_line.filtered(lambda l: l.id == line_id)
+            else:
+                # New line - find the most recently created line for this product
+                line = self.order_line.filtered(lambda l: l.product_id.id == product_id)[-1:]
+
+            if line and line.product_id.service_tracking == 'event':
+                line.write({
+                    'event_id': product.product_tmpl_id.event_id.id,
+                    'event_ticket_id': product.event_ticket_id.id,
+                })
+
+            return result
 
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
+
+    def _prepare_order_line_values(self, product_id, quantity, event_ticket_id=False, **kwargs):
+        """Override to set event fields for our variant-based architecture"""
+        values = super()._prepare_order_line_values(product_id, quantity, event_ticket_id, **kwargs)
+
+        # If this is an event product and we have a variant with event_ticket_id
+        product = self.env['product.product'].browse(product_id)
+        if product.service_tracking == 'event' and product.event_ticket_id:
+            # Set the event fields from our variant
+            values['event_id'] = product.product_tmpl_id.event_id.id
+            values['event_ticket_id'] = product.event_ticket_id.id
+
+        return values
 
