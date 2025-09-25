@@ -134,8 +134,8 @@
                                     </div>
 
                                     <!-- Hidden fields for this attendee -->
-                                    <input type="hidden" t-att-name="counter + '-event_ticket_id'" t-att-value="order_line.event_ticket_id.id"/>
-                                    <input type="hidden" t-att-name="counter + '-sale_order_line_id'" t-att-value="order_line.id"/>
+                                    <input type="hidden" t-att-name="str(counter) + '-event_ticket_id'" t-att-value="order_line.event_ticket_id.id"/>
+                                    <input type="hidden" t-att-name="str(counter) + '-sale_order_line_id'" t-att-value="order_line.id"/>
                                 </div>
                             </div>
                         </t>
