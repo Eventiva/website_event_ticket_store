@@ -36,6 +36,8 @@ Technical Details:
     'data': [
         'views/product_template_views.xml',
         'views/sale_order_line_views.xml',
+        'views/event_event_views.xml',
+        'views/event_templates.xml',
         'views/website_sale_templates.xml',
         'security/ir.model.access.csv',
     ],

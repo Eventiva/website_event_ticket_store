@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Event Form View - Add Store Redirect Options -->
+        <record id="event_event_form_store_redirect" model="ir.ui.view">
+            <field name="name">event.event.form.store.redirect</field>
+            <field name="model">event.event</field>
+            <field name="inherit_id" ref="event.event_event_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='event_type_id']" position="after">
+                    <div class="oe_title">
+                        <h2>
+                            <field name="redirect_to_store" widget="boolean_toggle"
+                                   string="Redirect Register Button to Store"
+                                   help="When enabled, the 'Register' button on the event page will redirect to the store page instead of the normal registration flow."/>
+                        </h2>
+                    </div>
+                </xpath>
+
+                <xpath expr="//field[@name='event_type_id']" position="after">
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_store_products" type="object"
+                                string="View Store Products" class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
+                    </div>
+                </xpath>
+
+                <xpath expr="//group[@name='event_details']" position="inside">
+                    <group name="store_redirect_settings" attrs="{'invisible': [('redirect_to_store', '=', False)]}">
+                        <group name="store_redirect_group">
+                            <field name="store_product_template_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Select a product template to redirect to specific product, or leave empty to redirect to general store page"/>
+                        </group>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Event Tree View - Add Store Redirect Column -->
+        <record id="event_event_tree_store_redirect" model="ir.ui.view">
+            <field name="name">event.event.tree.store.redirect</field>
+            <field name="model">event.event</field>
+            <field name="inherit_id" ref="event.event_event_tree_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='date_begin']" position="after">
+                    <field name="redirect_to_store" string="Store Redirect" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Action to view store products -->
+        <record id="action_view_store_products" model="ir.actions.act_window">
+            <field name="name">Store Products</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('service_tracking', '=', 'event'), ('event_id', '=', active_id)]</field>
+            <field name="context">{'default_service_tracking': 'event', 'default_event_id': active_id}</field>
+        </record>
+    </data>
+</odoo>

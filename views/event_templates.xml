@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Override Event Registration Button to Redirect to Store -->
+        <template id="event_registration_button_store_redirect" inherit_id="website_event.event_details" name="Event Registration Button Store Redirect">
+            <xpath expr="//a[@id='registration_button']" position="replace">
+                <a t-if="event.redirect_to_store"
+                   t-att-href="event.get_store_redirect_url()"
+                   class="btn btn-primary btn-lg mb-2"
+                   id="registration_button">
+                    <i class="fa fa-shopping-cart me-2"></i>
+                    <span t-esc="event.redirect_to_store and 'Buy Tickets' or 'Register'"/>
+                </a>
+                <a t-else=""
+                   t-att-href="'/event/' + str(event.id) + '/register'"
+                   class="btn btn-primary btn-lg mb-2"
+                   id="registration_button">
+                    <i class="fa fa-ticket me-2"></i>
+                    Register
+                </a>
+            </xpath>
+        </template>
+
+        <!-- Override Event Registration Button in Event List -->
+        <template id="event_list_registration_button_store_redirect" inherit_id="website_event.event_list_template" name="Event List Registration Button Store Redirect">
+            <xpath expr="//a[contains(@class, 'btn-primary') and contains(@href, '/register')]" position="replace">
+                <a t-if="event.redirect_to_store"
+                   t-att-href="event.get_store_redirect_url()"
+                   class="btn btn-primary">
+                    <i class="fa fa-shopping-cart me-1"></i>
+                    Buy Tickets
+                </a>
+                <a t-else=""
+                   t-att-href="'/event/' + str(event.id) + '/register'"
+                   class="btn btn-primary">
+                    <i class="fa fa-ticket me-1"></i>
+                    Register
+                </a>
+            </xpath>
+        </template>
+
+        <!-- Override Event Registration Button in Event Card -->
+        <template id="event_card_registration_button_store_redirect" inherit_id="website_event.event_card_template" name="Event Card Registration Button Store Redirect">
+            <xpath expr="//a[contains(@class, 'btn-primary') and contains(@href, '/register')]" position="replace">
+                <a t-if="event.redirect_to_store"
+                   t-att-href="event.get_store_redirect_url()"
+                   class="btn btn-primary">
+                    <i class="fa fa-shopping-cart me-1"></i>
+                    Buy Tickets
+                </a>
+                <a t-else=""
+                   t-att-href="'/event/' + str(event.id) + '/register'"
+                   class="btn btn-primary">
+                    <i class="fa fa-ticket me-1"></i>
+                    Register
+                </a>
+            </xpath>
+        </template>
+    </data>
+</odoo>
