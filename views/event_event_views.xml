@@ -17,7 +17,7 @@
                     <button name="action_view_store_products" type="object"
                             string="View Store Products" class="oe_stat_button"
                             icon="fa-shopping-cart"
-                            attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
+                            invisible="not redirect_to_store"/>
                 </xpath>
 
                 <xpath expr="//group[@name='right_event_details']" position="inside">
@@ -25,7 +25,7 @@
                            string="Store Product Template"
                            options="{'no_create': True, 'no_open': True}"
                            placeholder="Select a product template to redirect to specific product, or leave empty to redirect to general store page"
-                           attrs="{'invisible': [('redirect_to_store', '=', False)]}"/>
+                           invisible="not redirect_to_store"/>
                 </xpath>
             </field>
         </record>
