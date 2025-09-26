@@ -37,8 +37,26 @@ class SaleOrderLine(models.Model):
         if self.event_ticket_id and self.event_id:
             # For event tickets, use the product's price instead of the event ticket price
             # This allows product pricing, discounts, and attribute pricing to work correctly
-            # Call the base sale.order.line method to bypass event_sale override
-            return super(models.Model, self)._get_display_price()
+            # Implement the original sale.order.line logic directly to bypass event_sale override
+            self.ensure_one()
+
+            if self.product_type == 'combo':
+                return 0  # The display price of a combo line should always be 0.
+            if self.combo_item_id:
+                return self._get_combo_item_display_price()
+
+            # Use the original pricing logic without event ticket override
+            pricelist_price = self._get_pricelist_price()
+
+            if not self.pricelist_item_id._show_discount():
+                # No pricelist rule found => no discount from pricelist
+                return pricelist_price
+
+            base_price = self._get_pricelist_price_before_discount()
+
+            # negative discounts (= surcharge) are included in the display price
+            return max(base_price, pricelist_price)
+
         return super()._get_display_price()
 
     def _get_event_info(self):

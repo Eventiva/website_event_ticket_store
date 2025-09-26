@@ -501,7 +501,7 @@ class TestEventTicketStore(TransactionCase):
         event_ticket = self.env['event.event.ticket'].create({
             'name': 'Test Ticket',
             'event_id': event.id,
-            'price': 100.0,  # Event ticket price
+            'price': 1500.0,  # Event ticket price (like in demo data)
             'sale_available': True,
         })
 
@@ -531,7 +531,7 @@ class TestEventTicketStore(TransactionCase):
         # Test that _get_display_price returns the product price, not the event ticket price
         display_price = line._get_display_price()
         self.assertEqual(display_price, 80.0)  # Should use product price
-        self.assertNotEqual(display_price, 100.0)  # Should not use event ticket price
+        self.assertNotEqual(display_price, 1500.0)  # Should not use event ticket price
 
         # Test that price_unit is computed correctly
         line._compute_price_unit()
@@ -644,3 +644,58 @@ class TestEventTicketStore(TransactionCase):
         display_price = line._get_display_price()
         self.assertEqual(display_price, 120.0)  # Should use variant price
         self.assertNotEqual(display_price, 150.0)  # Should not use event ticket price
+
+    def test_demo_data_pricing_scenario(self):
+        """Test the specific demo data scenario: VIP product $100 vs event ticket $1500"""
+        # Create event (like Conference for Architects)
+        event = self.env['event.event'].create({
+            'name': 'Conference for Architects',
+            'date_begin': '2025-12-31 10:00:00',
+            'date_end': '2025-12-31 18:00:00',
+        })
+
+        # Create VIP event ticket with $1500 price (like in demo data)
+        vip_event_ticket = self.env['event.event.ticket'].create({
+            'name': 'VIP',
+            'event_id': event.id,
+            'price': 1500.0,  # Event ticket price (like in demo data)
+            'sale_available': True,
+        })
+
+        # Create VIP product with $100 price (like in demo data)
+        vip_product = self.env['product.product'].create({
+            'name': 'Event Registration - VIP',
+            'type': 'service',
+            'service_tracking': 'event',
+            'list_price': 100.0,  # Product price (like in demo data)
+            'event_id': event.id,
+            'event_ticket_id': vip_event_ticket.id,
+        })
+
+        # Create sale order line
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+        })
+
+        line = self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': vip_product.id,
+            'product_uom_qty': 1,
+            'event_id': event.id,
+            'event_ticket_id': vip_event_ticket.id,
+        })
+
+        # Test that _get_display_price returns the product price ($100), not the event ticket price ($1500)
+        display_price = line._get_display_price()
+        self.assertEqual(display_price, 100.0)  # Should use product price
+        self.assertNotEqual(display_price, 1500.0)  # Should not use event ticket price
+
+        # Test that price_unit is computed correctly
+        line._compute_price_unit()
+        self.assertEqual(line.price_unit, 100.0)  # Should use product price
+
+        print(f"✅ Demo data scenario test passed:")
+        print(f"   Product price: $100.00")
+        print(f"   Event ticket price: $1,500.00")
+        print(f"   Display price: ${display_price}")
+        print(f"   Price unit: ${line.price_unit}")
