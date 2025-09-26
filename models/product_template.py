@@ -18,6 +18,9 @@ class ProductTemplate(models.Model):
         """Clear event fields when service_tracking changes"""
         if self.service_tracking != 'event':
             self.event_id = False
+        elif self.service_tracking == 'event':
+            # Auto-publish event products on website
+            self.website_published = True
 
     def _get_event_info(self):
         """Get event information for display purposes"""
@@ -40,3 +43,8 @@ class ProductTemplate(models.Model):
             return False
 
         return variant._is_event_ticket_available()
+
+    @api.model
+    def _get_saleable_tracking_types(self):
+        """Extend saleable tracking types to include event products"""
+        return super()._get_saleable_tracking_types() + ['event']
