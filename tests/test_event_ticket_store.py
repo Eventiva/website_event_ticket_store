@@ -487,3 +487,160 @@ class TestEventTicketStore(TransactionCase):
         self.assertFalse(tickets[3].seats_limited)  # Standard - unlimited
         self.assertFalse(tickets[4].seats_limited)  # VIP - unlimited
         self.assertFalse(tickets[5].seats_limited)  # Investor - unlimited
+
+    def test_pricing_uses_product_price_not_event_ticket_price(self):
+        """Test that pricing uses product price instead of event ticket price"""
+        # Create event with different ticket and product prices
+        event = self.env['event.event'].create({
+            'name': 'Pricing Test Event',
+            'date_begin': '2025-12-31 10:00:00',
+            'date_end': '2025-12-31 18:00:00',
+        })
+
+        # Create event ticket with one price
+        event_ticket = self.env['event.event.ticket'].create({
+            'name': 'Test Ticket',
+            'event_id': event.id,
+            'price': 100.0,  # Event ticket price
+            'sale_available': True,
+        })
+
+        # Create product with different price (discounted)
+        product = self.env['product.product'].create({
+            'name': 'Discounted Ticket',
+            'type': 'service',
+            'service_tracking': 'event',
+            'list_price': 80.0,  # Product price (discounted)
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Create sale order line
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+        })
+
+        line = self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': product.id,
+            'product_uom_qty': 1,
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Test that _get_display_price returns the product price, not the event ticket price
+        display_price = line._get_display_price()
+        self.assertEqual(display_price, 80.0)  # Should use product price
+        self.assertNotEqual(display_price, 100.0)  # Should not use event ticket price
+
+        # Test that price_unit is computed correctly
+        line._compute_price_unit()
+        self.assertEqual(line.price_unit, 80.0)  # Should use product price
+
+    def test_pricing_with_product_discounts(self):
+        """Test that product discounts are applied correctly"""
+        # Create event
+        event = self.env['event.event'].create({
+            'name': 'Discount Test Event',
+            'date_begin': '2025-12-31 10:00:00',
+            'date_end': '2025-12-31 18:00:00',
+        })
+
+        # Create event ticket
+        event_ticket = self.env['event.event.ticket'].create({
+            'name': 'Discount Test Ticket',
+            'event_id': event.id,
+            'price': 200.0,  # Event ticket price
+            'sale_available': True,
+        })
+
+        # Create product with discount
+        product = self.env['product.product'].create({
+            'name': 'Discounted Ticket',
+            'type': 'service',
+            'service_tracking': 'event',
+            'list_price': 200.0,  # Base price
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Create pricelist with discount
+        pricelist = self.env['product.pricelist'].create({
+            'name': 'Test Pricelist',
+            'item_ids': [(0, 0, {
+                'applied_on': '1_product',
+                'product_tmpl_id': product.product_tmpl_id.id,
+                'compute_price': 'percentage',
+                'percent_price': 20.0,  # 20% discount
+            })]
+        })
+
+        # Create sale order with pricelist
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+            'pricelist_id': pricelist.id,
+        })
+
+        line = self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': product.id,
+            'product_uom_qty': 1,
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Test that discount is applied to product price, not event ticket price
+        display_price = line._get_display_price()
+        expected_price = 200.0 * 0.8  # 20% discount = 160.0
+        self.assertEqual(display_price, expected_price)
+
+    def test_pricing_with_product_variants(self):
+        """Test that product variant pricing works correctly"""
+        # Create event
+        event = self.env['event.event'].create({
+            'name': 'Variant Test Event',
+            'date_begin': '2025-12-31 10:00:00',
+            'date_end': '2025-12-31 18:00:00',
+        })
+
+        # Create event ticket
+        event_ticket = self.env['event.event.ticket'].create({
+            'name': 'Variant Test Ticket',
+            'event_id': event.id,
+            'price': 150.0,  # Event ticket price
+            'sale_available': True,
+        })
+
+        # Create product template
+        product_template = self.env['product.template'].create({
+            'name': 'Variant Test Ticket',
+            'type': 'service',
+            'service_tracking': 'event',
+            'list_price': 100.0,  # Base template price
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Create product variant with different price
+        product_variant = self.env['product.product'].create({
+            'product_tmpl_id': product_template.id,
+            'list_price': 120.0,  # Variant price (higher than template)
+        })
+
+        # Create sale order line
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+        })
+
+        line = self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': product_variant.id,
+            'product_uom_qty': 1,
+            'event_id': event.id,
+            'event_ticket_id': event_ticket.id,
+        })
+
+        # Test that variant price is used, not event ticket price
+        display_price = line._get_display_price()
+        self.assertEqual(display_price, 120.0)  # Should use variant price
+        self.assertNotEqual(display_price, 150.0)  # Should not use event ticket price

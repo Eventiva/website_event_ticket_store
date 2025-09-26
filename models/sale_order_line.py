@@ -33,11 +33,12 @@ class SaleOrderLine(models.Model):
             self.event_ticket_id = False
 
     def _get_display_price(self):
-        """Override to use variant price instead of event ticket price"""
+        """Override to use product/variant price instead of event ticket price"""
         if self.event_ticket_id and self.event_id:
-            # Use the variant's calculated price (base + attributes) instead of ticket price
-            # This allows attribute pricing to work correctly with event tickets
-            return super()._get_display_price()
+            # For event tickets, use the product's price instead of the event ticket price
+            # This allows product pricing, discounts, and attribute pricing to work correctly
+            # Call the base sale.order.line method to bypass event_sale override
+            return super(models.Model, self)._get_display_price()
         return super()._get_display_price()
 
     def _get_event_info(self):
