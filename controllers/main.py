@@ -2,6 +2,7 @@
 
 import json
 from odoo import http, fields, _
+from odoo.exceptions import ValidationError
 from odoo.http import request
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 
@@ -10,31 +11,9 @@ class WebsiteEventTicketStore(WebsiteSale):
     """Extend website sale to handle event ticket attendee data"""
 
     def _check_cart_and_addresses(self, order_sudo):
-        """Override to redirect to attendee collection for event products"""
-        # First check the parent method
-        redirection = super()._check_cart_and_addresses(order_sudo)
-        if redirection:
-            return redirection
-
-        # Check if there are event products in the cart
-        if order_sudo and order_sudo.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
-            # Only redirect if we're not already on the attendee page
-            current_path = request.httprequest.path
-
-            if current_path != '/shop/event_attendees':
-                # Check if attendee data has already been collected by looking for registrations
-                event_lines = order_sudo.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
-                has_registrations = any(line.registration_ids for line in event_lines)
-
-                if not has_registrations:
-                    # Debug logging
-                    import logging
-                    _logger = logging.getLogger(__name__)
-                    _logger.info(f"Redirecting to attendee collection for order {order_sudo.id}")
-                    # Redirect to attendee collection page
-                    return request.redirect('/shop/event_attendees')
-
-        return redirection
+        """Allow checkout to proceed without attendee collection - now handled after payment"""
+        # Simply call parent method without redirecting to attendee collection
+        return super()._check_cart_and_addresses(order_sudo)
 
     @http.route(['/shop/product/<model("product.template"):product>'], type='http', auth="public", website=True)
     def product(self, product, category='', search='', **kwargs):
@@ -73,29 +52,88 @@ class WebsiteEventTicketStore(WebsiteSale):
             'is_available': product._is_event_ticket_available(),
         }
 
-    @http.route(['/shop/event_attendees'], type='http', auth="public", methods=['GET', 'POST'], website=True, csrf=False)
-    def event_attendees(self, **kw):
-        """Event attendee collection step in checkout process"""
-        order = request.website.sale_get_order()
+    @http.route(['/shop/payment/validate'], type='http', auth="public", website=True, sitemap=False)
+    def shop_payment_validate(self, sale_order_id=None, **post):
+        """Override to redirect to attendee collection for event orders after payment"""
+        if sale_order_id is None:
+            order = request.website.sale_get_order()
+            if not order and 'sale_last_order_id' in request.session:
+                last_order_id = request.session['sale_last_order_id']
+                order = request.env['sale.order'].sudo().browse(last_order_id).exists()
+        else:
+            order = request.env['sale.order'].sudo().browse(sale_order_id)
+            assert order.id == request.session.get('sale_last_order_id')
 
-        if not order:
-            return request.redirect('/shop/cart')
+        errors = self._get_shop_payment_errors(order)
+        if errors:
+            first_error = errors[0]
+            error_msg = f"{first_error[0]}\n{first_error[1]}"
+            raise ValidationError(error_msg)
 
-        # Check if there are any event products in the cart
+        tx_sudo = order.get_portal_last_transaction() if order else order.env['payment.transaction']
+
+        if not order or (order.amount_total and not tx_sudo):
+            return request.redirect('/shop')
+
+        if order and not order.amount_total and not tx_sudo:
+            if order.state != 'sale':
+                order._validate_order()
+            request.website.sale_reset()
+            return request.redirect(order.get_portal_url())
+
+        # Check if this is an event order that needs attendee collection
+        if order and order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
+            event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+            has_registrations = any(line.registration_ids for line in event_lines)
+
+            if not has_registrations:
+                # Store the order ID in session for attendee collection
+                request.session['pending_attendee_order_id'] = order.id
+                # Don't reset the session yet - we need the order data for attendee collection
+                # request.website.sale_reset()  # Comment this out temporarily
+                return request.redirect('/shop/event_attendees_post_payment')
+
+        # For non-event orders or orders with existing registrations, proceed normally
+        request.website.sale_reset()
+        if tx_sudo and tx_sudo.state == 'draft':
+            return request.redirect('/shop')
+
+        return request.redirect('/shop/confirmation')
+
+    @http.route(['/shop/event_attendees_post_payment'], type='http', auth="public", methods=['GET', 'POST'], website=True, csrf=False)
+    def event_attendees_post_payment(self, **kw):
+        """Event attendee collection after payment confirmation"""
+        # Get the order from session
+        order_id = request.session.get('pending_attendee_order_id')
+        if not order_id:
+            return request.redirect('/shop')
+
+        order = request.env['sale.order'].sudo().browse(order_id)
+        if not order.exists():
+            return request.redirect('/shop')
+
+        # Check if there are any event products in the order
         event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
         if not event_lines:
-            return request.redirect('/shop/checkout')
+            return request.redirect('/shop/confirmation')
 
         if request.httprequest.method == 'POST':
             # Process attendee data and create registrations
             self._process_event_attendee_data_from_checkout(order, kw)
-            return request.redirect('/shop/checkout')
+            # Clear the pending order from session
+            request.session.pop('pending_attendee_order_id', None)
+            # Store the order ID for confirmation page
+            request.session['sale_last_order_id'] = order.id
+            # Reset the website sale session to clean up cart data
+            request.website.sale_reset()
+            # Redirect to final confirmation
+            return request.redirect('/shop/confirmation')
 
-        # Render the attendee collection page
+        # Render the post-payment attendee collection page
         values = {
             'website_sale_order': order,
         }
-        return request.render('website_event_ticket_store.event_attendee_checkout', values)
+        return request.render('website_event_ticket_store.event_attendee_post_payment', values)
 
     def _process_event_attendee_data_from_checkout(self, order, form_data):
         """Process attendee data from checkout step and create event registrations"""

@@ -2,43 +2,56 @@
 <odoo>
     <data>
         <!-- Override Product Template to show event information -->
-        <template id="product_template_event_info" inherit_id="website_sale.product" name="Product Template Event Info">
+        <template id="product_template_event_info" inherit_id="website_sale.product"
+            name="Product Template Event Info">
             <xpath expr="//div[@id='contact_us_wrapper']" position="before">
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id" class="event-info mt-3">
+                <div
+                    t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
+                    class="event-info mt-3">
                     <div class="card event-card">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0">
-                                <i class="fa fa-calendar"></i> Event Information
-                            </h5>
+                                <i class="fa fa-calendar"></i> Event Information </h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-8">
-                                    <h6 class="card-title" t-field="product.event_id.name"/>
+                                    <h6 class="card-title" t-field="product.event_id.name" />
                                     <p class="card-text">
                                         <i class="fa fa-calendar"></i>
-                                        <span t-field="product.event_id.date_begin" t-options="{'widget': 'datetime'}"/>
-                                        <span t-if="product.event_id.date_end and product.event_id.date_begin != product.event_id.date_end">
-                                            - <span t-field="product.event_id.date_end" t-options="{'widget': 'datetime'}"/>
+                                        <span t-field="product.event_id.date_begin"
+                                            t-options="{'widget': 'datetime'}" />
+                                        <span
+                                            t-if="product.event_id.date_end and product.event_id.date_begin != product.event_id.date_end">
+                                            - <span t-field="product.event_id.date_end"
+                                                t-options="{'widget': 'datetime'}" />
                                         </span>
                                     </p>
                                     <p class="card-text">
-                                        <strong>Ticket Type:</strong> <span t-field="product.product_variant_id.event_ticket_id.name"/>
+                                        <strong>Ticket Type:</strong>
+                                        <span
+                                            t-field="product.product_variant_id.event_ticket_id.name" />
                                     </p>
-                                    <p t-if="product.product_variant_id.event_ticket_id.description" class="card-text">
-                                        <span t-field="product.product_variant_id.event_ticket_id.description"/>
+                                    <p t-if="product.product_variant_id.event_ticket_id.description"
+                                        class="card-text">
+                                        <span
+                                            t-field="product.product_variant_id.event_ticket_id.description" />
                                     </p>
                                 </div>
                                 <div class="col-md-4 text-right">
                                     <div class="ticket-availability">
-                                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited" class="badge badge-info">
-                                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available"/> Tickets available
-                                        </span>
+                                        <span
+                                            t-if="product.product_variant_id.event_ticket_id.seats_limited"
+                                            class="badge badge-info">
+                                            <span
+                                                t-esc="product.product_variant_id.event_ticket_id.seats_available" />
+                                            Tickets available </span>
                                         <span t-else="" class="badge badge-success">
                                             Unlimited Tickets
                                         </span>
                                     </div>
-                                    <div t-if="not product._is_event_ticket_available()" class="alert alert-warning mt-2">
+                                    <div t-if="not product._is_event_ticket_available()"
+                                        class="alert alert-warning mt-2">
                                         <small>This ticket is no longer available</small>
                                     </div>
                                 </div>
@@ -50,127 +63,160 @@
         </template>
 
         <!-- Override Add to Cart Button for Event Products -->
-        <template id="product_template_event_ticket_button" inherit_id="website_sale.product" name="Product Template Event Ticket Button">
+        <template id="product_template_event_ticket_button" inherit_id="website_sale.product"
+            name="Product Template Event Ticket Button">
             <xpath expr="//a[@id='add_to_cart']" position="after">
-                <div t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)" class="alert alert-warning">
-                    <strong>Event Product:</strong> This product is not properly configured. Please contact the administrator.
-                </div>
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id and not product.product_variant_id._is_event_ticket_available()" class="alert alert-danger">
-                    <strong>Sold Out:</strong> This event ticket is no longer available for purchase.
-                </div>
+                <div
+                    t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)"
+                    class="alert alert-warning">
+                    <strong>Event Product:</strong> This product is not properly configured. Please
+                    contact the administrator. </div>
+                <div
+                    t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id and not product.product_variant_id._is_event_ticket_available()"
+                    class="alert alert-danger">
+                    <strong>Sold Out:</strong> This event ticket is no longer available for
+                    purchase. </div>
             </xpath>
         </template>
 
         <!-- Event Attendee Collection Checkout Step -->
         <template id="event_attendee_checkout" name="Event Attendee Checkout Step">
             <t t-call="website_sale.checkout_layout">
-                <t t-set="show_navigation_button" t-value="False"/>
+                <t t-set="show_navigation_button" t-value="False" />
                 <t t-set="oe_structure">
-                    <div class="oe_structure" id="oe_structure_website_event_ticket_store_attendees_1"/>
+                    <div class="oe_structure"
+                        id="oe_structure_website_event_ticket_store_attendees_1" />
                 </t>
 
                 <h3 class="mb-4">
-                    <i class="fa fa-calendar me-2"></i>
-                    Event Attendee Details
-                </h3>
+                    <i class="fa fa-calendar me-2"></i> Event Attendee Details </h3>
 
                 <div class="alert alert-info">
-                    <i class="fa fa-info-circle me-2"></i>
-                    Please provide attendee details for each event ticket in your order.
-                </div>
+                    <i class="fa fa-info-circle me-2"></i> Please provide attendee details for each
+                    event ticket in your order. </div>
 
                 <form action="/shop/event_attendees" method="post" class="js_website_submit_form">
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" />
 
-                    <t t-set="counter" t-value="0"/>
-                    <t t-set="input_type_by_question_type" t-value="{'name': 'text', 'email': 'email', 'phone': 'tel', 'company_name': 'text'}"/>
+                    <t t-set="counter" t-value="0" />
+                    <t t-set="input_type_by_question_type"
+                        t-value="{'name': 'text', 'email': 'email', 'phone': 'tel', 'company_name': 'text'}" />
 
                     <!-- Process each event ticket in the cart -->
-                    <t t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')" t-as="order_line">
+                    <t
+                        t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')"
+                        t-as="order_line">
                         <t t-foreach="range(int(order_line.product_uom_qty))" t-as="att_counter">
-                            <t t-set="counter" t-value="counter + 1"/>
+                            <t t-set="counter" t-value="counter + 1" />
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h5 class="mb-0">
-                                        <i class="fa fa-user me-2"></i>
-                                        Attendee #<span t-out="counter"/>
-                                        <small class="text-muted">- <span t-out="order_line.event_ticket_id.name"/></small>
+                                        <i class="fa fa-user me-2"></i> Attendee #<span
+                                            t-out="counter" />
+                                        <small class="text-muted">- <span
+                                                t-out="order_line.event_ticket_id.name" /></small>
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <!-- Event Questions for this attendee -->
                                     <div t-if="order_line.event_id.question_ids" class="row">
-                                        <t t-foreach="order_line.event_id.question_ids" t-as="question">
-                                            <div class="col-lg-6 mt-2" t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
-                                                <label t-out="question.title"/>
+                                        <t t-foreach="order_line.event_id.question_ids"
+                                            t-as="question">
+                                            <div class="col-lg-6 mt-2"
+                                                t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
+                                                <label t-out="question.title" />
                                                 <span t-if="question.is_mandatory_answer">*</span>
-                                                <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
-                                                    <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
-                                                           t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
-                                                           t-att-required="question.is_mandatory_answer"/>
+                                                <t
+                                                    t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                                    <input class="form-control"
+                                                        t-att-type="input_type_by_question_type[question.question_type]"
+                                                        t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                        t-att-required="question.is_mandatory_answer" />
                                                 </t>
-                                                <t t-elif="question.question_type == 'simple_choice'">
-                                                    <select t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
-                                                            class="form-select" t-att-required="question.is_mandatory_answer">
-                                                        <option value=""/>
-                                                        <t t-foreach="question.answer_ids" t-as="answer">
-                                                            <option t-out="answer.name" t-att-value="answer.id"/>
+                                                <t
+                                                    t-elif="question.question_type == 'simple_choice'">
+                                                    <select
+                                                        t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                        class="form-select"
+                                                        t-att-required="question.is_mandatory_answer">
+                                                        <option value="" />
+                                                        <t t-foreach="question.answer_ids"
+                                                            t-as="answer">
+                                                            <option t-out="answer.name"
+                                                                t-att-value="answer.id" />
                                                         </t>
                                                     </select>
                                                 </t>
                                                 <t t-else="">
-                                                    <textarea class="form-control" t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
-                                                              t-att-required="question.is_mandatory_answer" rows="3"></textarea>
+                                                    <textarea class="form-control"
+                                                        t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                        t-att-required="question.is_mandatory_answer"
+                                                        rows="3"></textarea>
                                                 </t>
                                             </div>
                                         </t>
                                     </div>
 
                                     <!-- Show message if no questions configured -->
-                                    <div t-if="not order_line.event_id.question_ids" class="alert alert-info">
-                                        <i class="fa fa-info-circle me-2"></i>
-                                        No attendee questions are configured for this event. Basic contact information will be collected.
-                                    </div>
+                                    <div t-if="not order_line.event_id.question_ids"
+                                        class="alert alert-info">
+                                        <i class="fa fa-info-circle me-2"></i> No attendee questions
+                                        are configured for this event. Basic contact information
+                                        will be collected. </div>
 
                                     <!-- Hidden fields for this attendee -->
-                                    <input type="hidden" t-att-name="str(counter) + '-event_ticket_id'" t-att-value="order_line.event_ticket_id.id"/>
-                                    <input type="hidden" t-att-name="str(counter) + '-sale_order_line_id'" t-att-value="order_line.id"/>
+                                    <input type="hidden"
+                                        t-att-name="str(counter) + '-event_ticket_id'"
+                                        t-att-value="order_line.event_ticket_id.id" />
+                                    <input type="hidden"
+                                        t-att-name="str(counter) + '-sale_order_line_id'"
+                                        t-att-value="order_line.id" />
                                 </div>
                             </div>
                         </t>
                     </t>
 
                     <!-- Global questions for the event -->
-                    <div t-if="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids" class="card mb-4">
+                    <div
+                        t-if="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                        class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fa fa-question-circle me-2"></i>
-                                Additional Information
-                            </h5>
+                                <i class="fa fa-question-circle me-2"></i> Additional Information </h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <t t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids" t-as="question">
-                                    <div class="mt-2" t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
-                                        <label t-out="question.title"/>
+                                <t
+                                    t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                    t-as="question">
+                                    <div class="mt-2"
+                                        t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
+                                        <label t-out="question.title" />
                                         <span t-if="question.is_mandatory_answer">*</span>
-                                        <t t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
-                                            <input class="form-control" t-att-type="input_type_by_question_type[question.question_type]"
-                                                   t-att-name="'0-' + question.question_type + '-' + str(question.id)"
-                                                   t-att-required="question.is_mandatory_answer"/>
+                                        <t
+                                            t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                            <input class="form-control"
+                                                t-att-type="input_type_by_question_type[question.question_type]"
+                                                t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                t-att-required="question.is_mandatory_answer" />
                                         </t>
                                         <t t-elif="question.question_type == 'simple_choice'">
-                                            <select t-att-name="'0-' + question.question_type + '-' + str(question.id)"
-                                                    class="form-select" t-att-required="question.is_mandatory_answer">
-                                                <option value=""/>
+                                            <select
+                                                t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                class="form-select"
+                                                t-att-required="question.is_mandatory_answer">
+                                                <option value="" />
                                                 <t t-foreach="question.answer_ids" t-as="answer">
-                                                    <option t-out="answer.name" t-att-value="answer.id"/>
+                                                    <option t-out="answer.name"
+                                                        t-att-value="answer.id" />
                                                 </t>
                                             </select>
                                         </t>
                                         <t t-else="">
-                                            <textarea class="form-control" t-att-name="'0-' + question.question_type + '-' + str(question.id)"
-                                                      t-att-required="question.is_mandatory_answer" rows="3"></textarea>
+                                            <textarea class="form-control"
+                                                t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                t-att-required="question.is_mandatory_answer"
+                                                rows="3"></textarea>
                                         </t>
                                     </div>
                                 </t>
@@ -180,47 +226,235 @@
 
                     <div class="d-flex justify-content-between">
                         <a href="/shop/cart" class="btn btn-secondary">
-                            <i class="fa fa-arrow-left me-2"></i>Back to Cart
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            Continue to Payment
-                            <i class="fa fa-arrow-right ms-2"></i>
+                            <i class="fa fa-arrow-left me-2"></i>Back to Cart </a>
+                        <button type="submit" class="btn btn-primary"> Continue to Payment <i
+                                class="fa fa-arrow-right ms-2"></i>
                         </button>
                     </div>
                 </form>
             </t>
         </template>
 
+        <!-- Event Attendee Collection Post-Payment -->
+        <template id="event_attendee_post_payment" name="Event Attendee Post Payment">
+            <t t-call="website.layout">
+                <div class="container mt-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h3 class="mb-0">
+                                        <i class="fa fa-check-circle me-2"></i> Payment Successful -
+                                        Complete Your Registration </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success">
+                                        <i class="fa fa-credit-card me-2"></i> Your payment has been
+                                        processed successfully! Please complete the attendee details
+                                        below to finalize your event registration. </div>
+
+                                    <form action="/shop/event_attendees_post_payment" method="post"
+                                        class="js_website_submit_form">
+                                        <input type="hidden" name="csrf_token"
+                                            t-att-value="request.csrf_token()" />
+
+                                        <t t-set="counter" t-value="0" />
+                                        <t t-set="input_type_by_question_type"
+                                            t-value="{'name': 'text', 'email': 'email', 'phone': 'tel', 'company_name': 'text'}" />
+
+                                        <!-- Process each event ticket in the order -->
+                                        <t
+                                            t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')"
+                                            t-as="order_line">
+                                            <t t-foreach="range(int(order_line.product_uom_qty))"
+                                                t-as="att_counter">
+                                                <t t-set="counter" t-value="counter + 1" />
+                                                <div class="card mb-4">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0">
+                                                            <i class="fa fa-user me-2"></i> Attendee
+                                                            #<span t-out="counter" />
+                                                            <small
+                                                                class="text-muted">- <span
+                                                                    t-out="order_line.event_ticket_id.name" /></small>
+                                                        </h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <!-- Event Questions for this attendee -->
+                                                        <div t-if="order_line.event_id.question_ids"
+                                                            class="row">
+                                                            <t
+                                                                t-foreach="order_line.event_id.question_ids"
+                                                                t-as="question">
+                                                                <div class="col-lg-6 mt-2"
+                                                                    t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
+                                                                    <label t-out="question.title" />
+                                                                    <span
+                                                                        t-if="question.is_mandatory_answer">
+                                                                        *</span>
+                                                                    <t
+                                                                        t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                                                        <input class="form-control"
+                                                                            t-att-type="input_type_by_question_type[question.question_type]"
+                                                                            t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                                            t-att-required="question.is_mandatory_answer" />
+                                                                    </t>
+                                                                    <t
+                                                                        t-elif="question.question_type == 'simple_choice'">
+                                                                        <select
+                                                                            t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                                            class="form-select"
+                                                                            t-att-required="question.is_mandatory_answer">
+                                                                            <option value="" />
+                                                                            <t
+                                                                                t-foreach="question.answer_ids"
+                                                                                t-as="answer">
+                                                                                <option
+                                                                                    t-out="answer.name"
+                                                                                    t-att-value="answer.id" />
+                                                                            </t>
+                                                                        </select>
+                                                                    </t>
+                                                                    <t t-else="">
+                                                                        <textarea
+                                                                            class="form-control"
+                                                                            t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
+                                                                            t-att-required="question.is_mandatory_answer"
+                                                                            rows="3"></textarea>
+                                                                    </t>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+
+                                                        <!-- Show message if no questions configured -->
+                                                        <div
+                                                            t-if="not order_line.event_id.question_ids"
+                                                            class="alert alert-info">
+                                                            <i class="fa fa-info-circle me-2"></i>
+                                                            No attendee questions are configured for
+                                                            this event. Basic contact information
+                                                            will be collected. </div>
+
+                                                        <!-- Hidden fields for this attendee -->
+                                                        <input type="hidden"
+                                                            t-att-name="str(counter) + '-event_ticket_id'"
+                                                            t-att-value="order_line.event_ticket_id.id" />
+                                                        <input type="hidden"
+                                                            t-att-name="str(counter) + '-sale_order_line_id'"
+                                                            t-att-value="order_line.id" />
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </t>
+
+                                        <!-- Global questions for the event -->
+                                        <div
+                                            t-if="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                            class="card mb-4">
+                                            <div class="card-header">
+                                                <h5 class="mb-0">
+                                                    <i class="fa fa-question-circle me-2"></i>
+                                                    Additional Information </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <t
+                                                        t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                                        t-as="question">
+                                                        <div class="mt-2"
+                                                            t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
+                                                            <label t-out="question.title" />
+                                                            <span
+                                                                t-if="question.is_mandatory_answer">
+                                                                *</span>
+                                                            <t
+                                                                t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                                                <input class="form-control"
+                                                                    t-att-type="input_type_by_question_type[question.question_type]"
+                                                                    t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                                    t-att-required="question.is_mandatory_answer" />
+                                                            </t>
+                                                            <t
+                                                                t-elif="question.question_type == 'simple_choice'">
+                                                                <select
+                                                                    t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                                    class="form-select"
+                                                                    t-att-required="question.is_mandatory_answer">
+                                                                    <option value="" />
+                                                                    <t
+                                                                        t-foreach="question.answer_ids"
+                                                                        t-as="answer">
+                                                                        <option t-out="answer.name"
+                                                                            t-att-value="answer.id" />
+                                                                    </t>
+                                                                </select>
+                                                            </t>
+                                                            <t t-else="">
+                                                                <textarea class="form-control"
+                                                                    t-att-name="'0-' + question.question_type + '-' + str(question.id)"
+                                                                    t-att-required="question.is_mandatory_answer"
+                                                                    rows="3"></textarea>
+                                                            </t>
+                                                        </div>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fa fa-check me-2"></i> Complete
+                                                Registration </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
         <!-- Override Product List Template to show event info -->
-        <template id="product_template_event_list" inherit_id="website_sale.products_item" name="Product Template Event List">
+        <template id="product_template_event_list" inherit_id="website_sale.products_item"
+            name="Product Template Event List">
             <xpath expr="//form[hasclass('oe_product_cart')]" position="inside">
-                <div t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id" class="event-info-small mt-2">
+                <div
+                    t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
+                    class="event-info-small mt-2">
                     <small class="text-muted">
                         <i class="fa fa-calendar"></i>
-                        <span t-field="product.event_id.name"/>
-                        <span t-if="product.event_id.date_begin"> - <span t-field="product.event_id.date_begin" t-options="{'widget': 'date'}"/></span>
+                        <span t-field="product.event_id.name" />
+                        <span t-if="product.event_id.date_begin"> - <span
+                                t-field="product.event_id.date_begin" t-options="{'widget': 'date'}" /></span>
                     </small>
-                    <br/>
+                    <br />
                     <small class="text-muted">
-                        <i class="fa fa-ticket"></i> <span t-field="product.product_variant_id.event_ticket_id.name"/>
-                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited" class="badge badge-sm badge-info ml-1">
-                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available"/> left
-                        </span>
+                        <i class="fa fa-ticket"></i>
+                        <span t-field="product.product_variant_id.event_ticket_id.name" />
+                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited"
+                            class="badge badge-sm badge-info ml-1">
+                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available" />
+                            left </span>
                     </small>
                 </div>
             </xpath>
         </template>
 
         <!-- Override Cart Template to show event info -->
-        <template id="cart_template_event_info" inherit_id="website_sale.cart_lines" name="Cart Template Event Info">
-            <xpath expr="//div[@t-foreach='website_sale_order.website_order_line']" position="inside">
+        <template id="cart_template_event_info" inherit_id="website_sale.cart_lines"
+            name="Cart Template Event Info">
+            <xpath expr="//div[@t-foreach='website_sale_order.website_order_line']"
+                position="inside">
                 <div t-if="line.event_id and line.event_ticket_id" class="event-info-cart mt-2">
                     <small class="text-muted">
-                        <i class="fa fa-calendar"></i> <span t-field="line.event_id.name"/>
+                        <i class="fa fa-calendar"></i>
+                        <span t-field="line.event_id.name" />
                     </small>
-                    <br/>
+                    <br />
                     <small class="text-muted">
-                        <i class="fa fa-ticket"></i> <span t-field="line.event_ticket_id.name"/>
+                        <i class="fa fa-ticket"></i>
+                        <span t-field="line.event_ticket_id.name" />
                     </small>
                 </div>
             </xpath>
@@ -230,30 +464,30 @@
         <template id="event_info_css" name="Event Info CSS">
             <style>
                 .event-card {
-                    border: 1px solid #007bff;
-                    border-radius: 0.375rem;
+                border: 1px solid #007bff;
+                border-radius: 0.375rem;
                 }
 
                 .event-card .card-header {
-                    background-color: #007bff !important;
-                    border-bottom: 1px solid #007bff;
+                background-color: #007bff !important;
+                border-bottom: 1px solid #007bff;
                 }
 
                 .event-info-small {
-                    font-size: 0.875rem;
+                font-size: 0.875rem;
                 }
 
                 .event-info-cart {
-                    font-size: 0.875rem;
+                font-size: 0.875rem;
                 }
 
                 .ticket-availability .badge {
-                    font-size: 0.75rem;
+                font-size: 0.75rem;
                 }
 
                 .event-info .alert {
-                    margin-bottom: 0;
-                    padding: 0.5rem;
+                margin-bottom: 0;
+                padding: 0.5rem;
                 }
             </style>
         </template>

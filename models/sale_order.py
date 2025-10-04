@@ -63,3 +63,18 @@ class SaleOrder(models.Model):
 
         return values
 
+    def action_confirm(self):
+        """Override to validate event attendee data before confirmation"""
+        # Check if there are event products in this order
+        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        if event_lines:
+            # Check if attendee data has been collected
+            has_registrations = any(line.registration_ids for line in event_lines)
+            if not has_registrations:
+                raise UserError(_(
+                    "Event attendee details must be collected before confirming this order. "
+                    "Please complete the attendee registration process."
+                ))
+
+        return super().action_confirm()
+

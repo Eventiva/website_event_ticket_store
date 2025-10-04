@@ -699,3 +699,65 @@ class TestEventTicketStore(TransactionCase):
         print(f"   Event ticket price: $1,500.00")
         print(f"   Display price: ${display_price}")
         print(f"   Price unit: ${line.price_unit}")
+
+    def test_post_payment_attendee_collection_validation(self):
+        """Test that event orders cannot be confirmed without attendee registrations"""
+        # Create sale order with event product
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+        })
+
+        # Add event product to order
+        self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': self.product.id,
+            'product_uom_qty': 1,
+            'event_id': self.event.id,
+            'event_ticket_id': self.event_ticket.id,
+        })
+
+        # Try to confirm order without attendee registrations - should raise error
+        with self.assertRaises(UserError) as context:
+            sale_order.action_confirm()
+
+        self.assertIn("Event attendee details must be collected", str(context.exception))
+        self.assertIn("attendee registration process", str(context.exception))
+
+        # Create attendee registration
+        self.env['event.registration'].create({
+            'event_id': self.event.id,
+            'event_ticket_id': self.event_ticket.id,
+            'sale_order_id': sale_order.id,
+            'sale_order_line_id': sale_order.order_line[0].id,
+            'name': 'Test Attendee',
+            'email': 'test@example.com',
+            'state': 'draft',
+        })
+
+        # Now order should be confirmable
+        sale_order.action_confirm()
+        self.assertEqual(sale_order.state, 'sale')
+
+    def test_non_event_order_confirmation(self):
+        """Test that non-event orders can be confirmed without attendee registrations"""
+        # Create regular product
+        regular_product = self.env['product.product'].create({
+            'name': 'Regular Product',
+            'type': 'product',
+            'list_price': 50.0,
+        })
+
+        # Create sale order with regular product
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.env.ref('base.res_partner_1').id,
+        })
+
+        self.env['sale.order.line'].create({
+            'order_id': sale_order.id,
+            'product_id': regular_product.id,
+            'product_uom_qty': 1,
+        })
+
+        # Regular order should be confirmable without attendee registrations
+        sale_order.action_confirm()
+        self.assertEqual(sale_order.state, 'sale')
