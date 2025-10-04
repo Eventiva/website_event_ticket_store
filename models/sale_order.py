@@ -82,3 +82,17 @@ class SaleOrder(models.Model):
 
         return super().action_confirm()
 
+    def _validate_order(self):
+        """Override to handle event orders that need attendee data collection"""
+        # For event orders without attendee data, don't validate yet
+        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        if event_lines:
+            has_registrations = any(line.registration_ids for line in event_lines)
+            if not has_registrations:
+                # Don't validate event orders without attendee data
+                # The order will be validated after attendee collection
+                return
+
+        # For non-event orders or event orders with attendee data, proceed normally
+        super()._validate_order()
+

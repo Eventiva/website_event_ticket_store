@@ -78,10 +78,22 @@ class WebsiteEventTicketStore(WebsiteSale):
         if order and not order.amount_total and not tx_sudo:
             if order.state != 'sale':
                 order._validate_order()
+
+            # Check if this is an event order that needs attendee collection
+            if order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
+                event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+                has_registrations = any(line.registration_ids for line in event_lines)
+
+                if not has_registrations:
+                    # Store the order ID in session for attendee collection
+                    request.session['pending_attendee_order_id'] = order.id
+                    # Don't reset the session yet - we need the order data for attendee collection
+                    return request.redirect('/shop/event_attendees_post_payment')
+
             request.website.sale_reset()
             return request.redirect(order.get_portal_url())
 
-        # Check if this is an event order that needs attendee collection
+        # Check if this is an event order that needs attendee collection (for paid orders)
         if order and order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
             event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
             has_registrations = any(line.registration_ids for line in event_lines)
@@ -90,7 +102,6 @@ class WebsiteEventTicketStore(WebsiteSale):
                 # Store the order ID in session for attendee collection
                 request.session['pending_attendee_order_id'] = order.id
                 # Don't reset the session yet - we need the order data for attendee collection
-                # request.website.sale_reset()  # Comment this out temporarily
                 return request.redirect('/shop/event_attendees_post_payment')
 
         # For non-event orders or orders with existing registrations, proceed normally
