@@ -120,6 +120,10 @@ class WebsiteEventTicketStore(WebsiteSale):
         if request.httprequest.method == 'POST':
             # Process attendee data and create registrations
             self._process_event_attendee_data_from_checkout(order, kw)
+
+            # Now confirm the order since we have attendee data
+            order.with_context(skip_attendee_validation=True).action_confirm()
+
             # Clear the pending order from session
             request.session.pop('pending_attendee_order_id', None)
             # Store the order ID for confirmation page
@@ -137,6 +141,11 @@ class WebsiteEventTicketStore(WebsiteSale):
 
     def _process_event_attendee_data_from_checkout(self, order, form_data):
         """Process attendee data from checkout step and create event registrations"""
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        _logger.info(f"Processing attendee data for order {order.id}")
+        _logger.info(f"Form data keys: {list(form_data.keys())}")
 
         # Clear existing registrations for this order
         order.order_line.mapped('registration_ids').unlink()
@@ -147,7 +156,10 @@ class WebsiteEventTicketStore(WebsiteSale):
             event_ticket_id = form_data.get(f"{attendee_counter}-event_ticket_id")
             sale_order_line_id = form_data.get(f"{attendee_counter}-sale_order_line_id")
 
+            _logger.info(f"Processing attendee {attendee_counter}: ticket_id={event_ticket_id}, line_id={sale_order_line_id}")
+
             if not event_ticket_id or not sale_order_line_id:
+                _logger.warning(f"Missing data for attendee {attendee_counter}")
                 attendee_counter += 1
                 continue
 
@@ -156,11 +168,24 @@ class WebsiteEventTicketStore(WebsiteSale):
             event_ticket = request.env['event.event.ticket'].browse(int(event_ticket_id))
 
             if not order_line.exists() or not event_ticket.exists():
+                _logger.warning(f"Order line or event ticket not found for attendee {attendee_counter}")
                 attendee_counter += 1
                 continue
 
             # Extract attendee data from event questions
             attendee_data = self._extract_attendee_data_from_questions(event_ticket.event_id, form_data, attendee_counter)
+            _logger.info(f"Extracted attendee data: {attendee_data}")
+
+            # If no attendee data was extracted from questions, try to get basic info from form
+            if not attendee_data:
+                # Try to get basic attendee info directly from form fields
+                attendee_data = {
+                    'name': form_data.get(f"{attendee_counter}-name", ''),
+                    'email': form_data.get(f"{attendee_counter}-email", ''),
+                    'phone': form_data.get(f"{attendee_counter}-phone", ''),
+                    'company_name': form_data.get(f"{attendee_counter}-company_name", ''),
+                }
+                _logger.info(f"Using direct form data: {attendee_data}")
 
             # Create registration with extracted data
             vals = {
@@ -175,8 +200,11 @@ class WebsiteEventTicketStore(WebsiteSale):
                 'state': 'draft',
             }
 
+            _logger.info(f"Creating registration with vals: {vals}")
+
             # Create registration
             registration = request.env['event.registration'].sudo().create(vals)
+            _logger.info(f"Created registration: {registration.id}")
 
             # Process event question answers
             self._process_event_question_answers(event_ticket.event_id, form_data, registration, attendee_counter)
@@ -225,16 +253,24 @@ class WebsiteEventTicketStore(WebsiteSale):
 
     def _extract_attendee_data_from_questions(self, event, form_data, attendee_counter=1):
         """Extract attendee data from event questions (name, email, phone, company)"""
+        import logging
+        _logger = logging.getLogger(__name__)
 
         attendee_data = {}
 
+        _logger.info(f"Extracting data for event {event.id}, attendee {attendee_counter}")
+        _logger.info(f"Event has {len(event.question_ids)} questions")
+
         if not event.question_ids:
+            _logger.info("No event questions found")
             return attendee_data
 
         # Look for standard attendee fields in questions
         for question in event.question_ids:
             field_name = f"{attendee_counter}-{question.question_type}-{question.id}"
             answer_value = form_data.get(field_name, '').strip()
+
+            _logger.info(f"Question {question.id} ({question.question_type}): field_name={field_name}, value='{answer_value}'")
 
             if not answer_value:
                 continue
@@ -249,6 +285,7 @@ class WebsiteEventTicketStore(WebsiteSale):
             elif question.question_type == 'company_name':
                 attendee_data['company_name'] = answer_value
 
+        _logger.info(f"Final attendee data: {attendee_data}")
         return attendee_data
 
     def _process_event_question_answers(self, event, form_data, registration, attendee_counter=1):

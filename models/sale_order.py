@@ -65,6 +65,10 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         """Override to validate event attendee data before confirmation"""
+        # Skip validation if we're confirming after attendee data collection
+        if self.env.context.get('skip_attendee_validation'):
+            return super().action_confirm()
+
         # Check if there are event products in this order
         event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
         if event_lines:

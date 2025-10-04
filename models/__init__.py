@@ -7,3 +7,4 @@ from . import sale_order
 from . import event_event
 from . import event_event_ticket
 from . import website
+from . import payment_transaction
