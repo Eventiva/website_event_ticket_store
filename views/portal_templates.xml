@@ -187,6 +187,7 @@
                                 <th>Ticket</th>
                                 <th>Status</th>
                                 <th>Order</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -215,6 +216,18 @@
                                             <t t-out="reg.sale_order_id.name" />
                                         </a>
                                         <t t-if="not reg.sale_order_id">-</t>
+                                    </td>
+                                    <td>
+                                        <t t-if="reg.state in ['open', 'done']">
+                                            <a
+                                                t-attf-href="/event/{{ reg.event_id.id }}/my_tickets?registration_ids={{ reg.id }}&amp;tickets_hash={{ reg.event_id._get_tickets_access_hash(reg.id) }}"
+                                                class="btn btn-sm btn-outline-primary"
+                                                target="_blank" title="Download Ticket">
+                                                <i class="fa fa-download me-1"></i>Download </a>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="text-muted">Not available</span>
+                                        </t>
                                     </td>
                                 </tr>
                             </t>
