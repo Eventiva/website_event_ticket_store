@@ -235,8 +235,7 @@
                 <t t-set="title">Your Event Registrations</t>
                 <t t-set="url" t-value="'/my/registrations'" />
                 <t t-set="text">View all your event registrations</t>
-                <t t-set="count"
-                    t-value="event_registrations_count if 'event_registrations_count' in values else 0" />
+                <t t-set="count" t-value="event_registrations_count or 0" />
             </t>
         </xpath>
     </template>
