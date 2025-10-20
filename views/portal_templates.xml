@@ -157,4 +157,88 @@
         </xpath>
     </template>
 
+    <!-- Event Registrations portal page (all registrations) -->
+    <template id="portal_my_registrations" name="My Event Registrations">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True" />
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Your Event Registrations</t>
+            </t>
+
+            <t t-if="not registrations">
+                <div class="alert alert-info" role="alert">
+                    <p class="mb-0">
+                        <i class="fa fa-info-circle me-2"></i> You don't have any event
+                        registrations yet. </p>
+                </div>
+            </t>
+
+            <t t-if="registrations">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>Attendee</th>
+                                <th>Email</th>
+                                <th>Event</th>
+                                <th>Ticket</th>
+                                <th>Status</th>
+                                <th>Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="registrations" t-as="reg">
+                                <tr>
+                                    <td>
+                                        <t t-out="reg.name or '-'" />
+                                    </td>
+                                    <td>
+                                        <t t-out="reg.email or '-'" />
+                                    </td>
+                                    <td>
+                                        <t t-out="reg.event_id.name" />
+                                    </td>
+                                    <td>
+                                        <t t-out="reg.event_ticket_id.name" />
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary text-uppercase">
+                                            <t t-out="reg.state" />
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a t-if="reg.sale_order_id"
+                                            t-att-href="reg.sale_order_id.get_portal_url()">
+                                            <t t-out="reg.sale_order_id.name" />
+                                        </a>
+                                        <t t-if="not reg.sale_order_id">-</t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+
+                <t t-if="pager">
+                    <t t-call="portal.pager" />
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Add entry next to Your Orders for Registrations -->
+    <template id="portal_my_home_event_registrations_entry"
+        name="Portal My Home : Registrations Entry" inherit_id="portal.portal_my_home" priority="36">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/website_event_ticket_store/static/description/icon.png'" />
+                <t t-set="title">Your Event Registrations</t>
+                <t t-set="url" t-value="'/my/registrations'" />
+                <t t-set="text">View all your event registrations</t>
+                <t t-set="count"
+                    t-value="event_registrations_count if 'event_registrations_count' in values else 0" />
+            </t>
+        </xpath>
+    </template>
+
 </odoo>

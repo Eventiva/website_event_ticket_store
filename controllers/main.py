@@ -386,6 +386,14 @@ class EventTicketStorePortal(CustomerPortal):
 
             values['pending_event_registrations_count'] = pending_count
 
+        if 'event_registrations_count' in counters:
+            partner = request.env.user.partner_id
+            # Count all registrations related to user's orders
+            registrations_domain = [
+                ('sale_order_id.partner_id', '=', partner.id),
+            ]
+            values['event_registrations_count'] = request.env['event.registration'].sudo().search_count(registrations_domain)
+
         return values
 
     @http.route(['/my/pending-registrations'], type='http', auth="user", website=True)
@@ -408,3 +416,25 @@ class EventTicketStorePortal(CustomerPortal):
         }
 
         return request.render('website_event_ticket_store.portal_my_pending_registrations', values)
+
+    @http.route(['/my/registrations'], type='http', auth="user", website=True)
+    def portal_my_registrations(self, page=1, **kw):
+        """Display all event registrations linked to customer's orders"""
+        partner = request.env.user.partner_id
+        Registration = request.env['event.registration']
+
+        domain = [('sale_order_id.partner_id', '=', partner.id)]
+
+        # Simple pager
+        total = Registration.sudo().search_count(domain)
+        step = 20
+        pager = portal_pager(url='/my/registrations', total=total, page=page, step=step, scope=7)
+
+        registrations = Registration.sudo().search(domain, order='create_date desc', limit=step, offset=pager['offset'])
+
+        values = {
+            'registrations': registrations,
+            'page_name': 'event_registrations',
+            'pager': pager,
+        }
+        return request.render('website_event_ticket_store.portal_my_registrations', values)
