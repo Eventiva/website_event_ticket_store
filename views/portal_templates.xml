@@ -245,7 +245,7 @@
     <!-- Add Event Registrations card to portal -->
     <template id="portal_my_home_event_registrations_entry"
         name="Portal My Home : Registrations Entry" inherit_id="portal.portal_my_home" priority="36">
-        <xpath expr="//div[@class='row']//div[@class='col-lg-8']" position="inside">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="after">
             <t t-set="event_registrations_count" t-value="0" />
             <t t-set="partner" t-value="request.env.user.partner_id" />
             <t t-set="registrations_domain"
