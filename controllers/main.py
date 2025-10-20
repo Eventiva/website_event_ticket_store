@@ -143,6 +143,13 @@ class WebsiteEventTicketStore(WebsiteSale):
         if not event_lines:
             return request.redirect('/shop/confirmation')
 
+        # Enforce successful payment before attendee collection
+        tx = order.get_portal_last_transaction()
+        if not (tx and tx.state in ['done', 'authorized']):
+            # Put order in session and redirect to payment
+            request.session['sale_order_id'] = order.id
+            return request.redirect('/shop/payment')
+
         # Check if already completed
         has_registrations = any(line.registration_ids for line in event_lines)
         if has_registrations:
@@ -155,6 +162,17 @@ class WebsiteEventTicketStore(WebsiteSale):
 
             # Now confirm the order since we have attendee data
             order.with_context(skip_attendee_validation=True).action_confirm()
+
+            # If the order is paid and still 'to invoice', create and post the invoice now
+            try:
+                tx_check = order.get_portal_last_transaction()
+                if order.invoice_status == 'to invoice' and tx_check and tx_check.state in ['done', 'authorized']:
+                    invoices = order._create_invoices()
+                    if invoices:
+                        invoices.action_post()
+            except Exception:
+                # Avoid blocking the user flow; invoice can be generated manually if needed
+                pass
 
             # Store the order ID for confirmation page
             request.session['sale_last_order_id'] = order.id
@@ -382,7 +400,9 @@ class EventTicketStorePortal(CustomerPortal):
             orders = request.env['sale.order'].search(domain)
             for order in orders:
                 if order._has_pending_attendee_details():
-                    pending_count += 1
+                    tx = order.get_portal_last_transaction()
+                    if tx and tx.state in ['done', 'authorized']:
+                        pending_count += 1
 
             values['pending_event_registrations_count'] = pending_count
 
@@ -408,7 +428,12 @@ class EventTicketStorePortal(CustomerPortal):
         ]
 
         orders = request.env['sale.order'].search(domain)
-        pending_orders = orders.filtered(lambda o: o._has_pending_attendee_details())
+        pending_orders = request.env['sale.order']
+        for o in orders:
+            if o._has_pending_attendee_details():
+                tx = o.get_portal_last_transaction()
+                if tx and tx.state in ['done', 'authorized']:
+                    pending_orders |= o
 
         values = {
             'pending_orders': pending_orders,
