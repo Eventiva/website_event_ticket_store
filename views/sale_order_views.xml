@@ -85,19 +85,4 @@
         action="action_pending_event_orders"
         sequence="10" />
 
-    <!-- Search view for pending attendee details -->
-    <record id="view_sales_order_filter_inherit_event_store" model="ir.ui.view">
-        <field name="name">sale.order.search.inherit.event.store</field>
-        <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_sales_order_filter" />
-        <field name="arch" type="xml">
-            <xpath expr="//filter[@name='sales']" position="after">
-                <separator />
-                <filter string="Pending Attendee Details"
-                    name="pending_attendee_details"
-                    domain="[('state', 'in', ['draft', 'sent']), ('order_line.product_id.service_tracking', '=', 'event'), ('attendee_access_token', '!=', False)]" />
-            </xpath>
-        </field>
-    </record>
-
 </odoo>

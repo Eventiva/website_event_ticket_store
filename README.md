@@ -287,10 +287,6 @@ When upgrading to this version:
    - Accessible via Sales > Configuration > Event Ticket Store
    - Supports bulk actions
 
-4. **Search Filter**:
-   - "Pending Attendee Details" filter in order search
-   - Quick access to incomplete registrations
-
 ## Testing
 
 The module includes comprehensive tests covering:
