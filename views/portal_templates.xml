@@ -233,12 +233,19 @@
     <template id="portal_my_home_event_registrations_entry"
         name="Portal My Home : Registrations Entry" inherit_id="portal.portal_my_home" priority="36">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-set="event_registrations_count" t-value="0" />
+            <t t-set="partner" t-value="request.env.user.partner_id" />
+            <t t-set="registrations_domain"
+                t-value="[('sale_order_id.partner_id', '=', partner.id)]" />
+            <t t-set="event_registrations_count"
+                t-value="request.env['event.registration'].sudo().search_count(registrations_domain)" />
+
             <t t-call="portal.portal_docs_entry">
                 <t t-set="icon" t-value="'/website_event_ticket_store/static/description/icon.png'" />
                 <t t-set="title">Your Event Registrations</t>
                 <t t-set="url" t-value="'/my/registrations'" />
                 <t t-set="text">View all your event registrations</t>
-                <t t-set="count" t-value="event_registrations_count or 0" />
+                <t t-set="count" t-value="event_registrations_count" />
             </t>
         </xpath>
     </template>
