@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Pending Event Registrations Portal Page -->
+    <template id="portal_my_pending_registrations" name="My Pending Event Registrations">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True" />
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Pending Event Registrations</t>
+            </t>
+
+            <t t-if="not pending_orders">
+                <div class="alert alert-info" role="alert">
+                    <p class="mb-0">
+                        <i class="fa fa-check-circle me-2"></i> You don't have any pending event
+                        registrations. All your orders are complete! </p>
+                </div>
+            </t>
+
+            <t t-if="pending_orders">
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fa fa-exclamation-triangle me-2"></i>Action Required </h4>
+                    <p>
+                        The following orders require attendee details to complete your event
+                        registration.
+                        Please click on each order to provide the necessary information.
+                    </p>
+                </div>
+
+                <div class="row">
+                    <t t-foreach="pending_orders" t-as="order">
+                        <div class="col-lg-6 col-md-12 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="fa fa-shopping-cart me-2"></i> Order <t
+                                            t-esc="order.name" />
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Order Date:</strong>
+                                        <t t-esc="order.date_order"
+                                            t-options='{"widget": "datetime"}' />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong>Total:</strong>
+                                        <span t-field="order.amount_total"
+                                            t-options='{"widget": "monetary", "display_currency": order.currency_id}' />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong>Event Tickets:</strong>
+                                        <ul class="list-unstyled mb-0 mt-2">
+                                            <t
+                                                t-foreach="order.order_line.filtered(lambda l: l.product_id.service_tracking == 'event')"
+                                                t-as="line">
+                                                <li class="mb-2">
+                                                    <i class="fa fa-ticket me-2 text-primary"></i>
+                                                    <span t-field="line.product_id.name" />
+                                                    <span class="badge bg-primary ms-2">
+                                                        <t t-esc="int(line.product_uom_qty)" />
+                                                        ticket<t t-if="line.product_uom_qty > 1">s</t>
+                                                    </span>
+                                                    <br />
+                                                    <small class="text-muted ms-4"
+                                                        t-if="line.event_id">
+                                                        <i class="fa fa-calendar me-1"></i>
+                                                        <t t-esc="line.event_id.name" />
+                                                    </small>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a t-att-href="order.get_attendee_details_url()"
+                                        class="btn btn-primary btn-block w-100">
+                                        <i class="fa fa-edit me-2"></i> Complete Attendee Details </a>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Add menu item to portal -->
+    <template id="portal_my_home_menu_pending_registrations"
+        name="Portal My Home : Pending Event Registrations"
+        inherit_id="portal.portal_my_home" priority="35">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="pending_event_registrations_count" t-value="0" />
+            <t t-set="partner" t-value="request.env.user.partner_id" />
+            <t t-set="domain"
+                t-value="[('partner_id', '=', partner.id), ('state', 'in', ['draft', 'sent'])]" />
+            <t t-set="orders" t-value="request.env['sale.order'].search(domain)" />
+            <t t-foreach="orders" t-as="order">
+                <t t-if="order._has_pending_attendee_details()">
+                    <t t-set="pending_event_registrations_count"
+                        t-value="pending_event_registrations_count + 1" />
+                </t>
+            </t>
+
+            <t t-if="pending_event_registrations_count > 0">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fa fa-exclamation-triangle me-2"></i> Action Required: Complete
+                        Your Event Registration </h4>
+                    <p class="mb-2"> You have <strong>
+                            <t t-esc="pending_event_registrations_count" />
+                        </strong>
+                        order<t t-if="pending_event_registrations_count > 1">s</t> waiting for
+                        attendee details. </p>
+                    <hr />
+                    <p class="mb-0">
+                        <a href="/my/pending-registrations" class="btn btn-warning">
+                            <i class="fa fa-edit me-2"></i> Complete Attendee Details Now </a>
+                    </p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Add counter to portal sidebar -->
+    <template id="portal_my_home_pending_registrations"
+        name="Portal My Home : Pending Registrations"
+        inherit_id="portal.portal_my_home" priority="35">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-set="partner" t-value="request.env.user.partner_id" />
+            <t t-set="domain"
+                t-value="[('partner_id', '=', partner.id), ('state', 'in', ['draft', 'sent'])]" />
+            <t t-set="orders" t-value="request.env['sale.order'].search(domain)" />
+            <t t-set="pending_count" t-value="0" />
+            <t t-foreach="orders" t-as="order">
+                <t t-if="order._has_pending_attendee_details()">
+                    <t t-set="pending_count" t-value="pending_count + 1" />
+                </t>
+            </t>
+
+            <t t-if="pending_count > 0">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon"
+                        t-value="'/website_event_ticket_store/static/description/icon.png'" />
+                    <t t-set="title">Pending Event Registrations</t>
+                    <t t-set="url" t-value="'/my/pending-registrations'" />
+                    <t t-set="text">Complete attendee details for your event tickets</t>
+                    <t t-set="count" t-value="pending_count" />
+                </t>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>

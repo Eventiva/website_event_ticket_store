@@ -248,7 +248,9 @@
                                         processed successfully! Please complete the attendee details
                                         below to finalize your event registration. </div>
 
-                                    <form action="/shop/event_attendees_post_payment" method="post"
+                                    <form
+                                        t-attf-action="/my/orders/#{website_sale_order.id}/attendee-details/#{access_token}"
+                                        method="post"
                                         class="js_website_submit_form">
                                         <input type="hidden" name="csrf_token"
                                             t-att-value="request.csrf_token()" />

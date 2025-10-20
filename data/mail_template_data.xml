@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Email Template: Attendee Details Reminder -->
+        <record id="mail_template_attendee_details_reminder" model="mail.template">
+            <field name="name">Event Ticket: Complete Attendee Details</field>
+            <field name="model_id" ref="sale.model_sale_order" />
+            <field name="subject">Complete Your Event Registration - Attendee Details Required</field>
+            <field name="email_from">${(object.company_id.email or user.email_formatted) | safe}</field>
+            <field name="email_to">${object.partner_id.email | safe}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;"> Dear
+                        ${object.partner_id.name}, <br /><br /> Thank you for your purchase! Your
+                        payment has been successfully processed for order <strong>${object.name}</strong>
+                        . <br /><br />
+        <strong>Important:</strong> To complete your event
+                        registration, please provide the attendee details for your event tickets. <br /><br />
+                        % if object._has_pending_attendee_details(): <div
+                            style="margin: 20px 0px; padding: 15px; background-color: #f0f8ff; border-left: 4px solid #4CAF50;">
+                            <p style="margin: 0px; padding: 0px; font-size: 14px;">
+                                <strong>What you need to do:</strong>
+                            </p>
+                            <ul style="margin: 10px 0px 0px 20px; padding: 0px;">
+                                <li>Click the button below to access the attendee details form</li>
+                                <li>Fill in the required information for each ticket holder</li>
+                                <li>Submit the form to finalize your registration</li>
+                            </ul>
+                        </div>
+                        % endif <table cellpadding="0" cellspacing="0" style="margin: 20px 0px;">
+                            <tr>
+                                <td>
+                                    <a href="${object.get_attendee_details_url()}"
+                                        style="padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; font-size: 14px;">
+                        Complete Attendee Details
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+        <p
+                            style="margin: 15px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Order Summary:</strong>
+                        </p>
+        <table
+                            style="width: 100%; border-collapse: collapse; margin: 10px 0px; font-size: 13px;">
+                            <thead style="background-color: #f5f5f5;">
+                                <tr>
+                                    <th
+                                        style="padding: 8px; text-align: left; border: 1px solid #ddd;">
+                        Product</th>
+                                    <th
+                                        style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                        Quantity</th>
+                                    <th
+                                        style="padding: 8px; text-align: right; border: 1px solid #ddd;">
+                        Price</th>
+                                </tr>
+                            </thead>
+                            <tbody> % for line in object.order_line.filtered(lambda l:
+                        l.product_id.service_tracking == 'event'): <tr>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        ${line.product_id.name} % if line.event_id: <br /><small
+                                            style="color: #666;">${line.event_id.name}</small> %
+                        endif </td>
+                                    <td
+                                        style="padding: 8px; text-align: center; border: 1px solid #ddd;">
+                        ${int(line.product_uom_qty)}</td>
+                                    <td
+                                        style="padding: 8px; text-align: right; border: 1px solid #ddd;">${'%.2f'
+                        % line.price_subtotal} ${object.currency_id.symbol}</td>
+                                </tr>
+                        % endfor </tbody>
+                        </table>
+
+        <p
+                            style="margin: 15px 0px 5px 0px; padding: 0px; font-size: 13px; color: #666;">
+                            <em>You can return to this page at any time by clicking the link above.
+                        This link is unique to your order and should not be shared.</em>
+                        </p>
+
+        <p
+                            style="margin: 15px 0px 5px 0px; padding: 0px; font-size: 13px; color: #666;">
+                        If you have any questions, please don't hesitate to contact us.
+                        </p>
+
+        <br />
+        <p
+                            style="margin: 0px; padding: 0px; font-size: 13px;"> Best regards, <br />
+                        ${object.company_id.name} </p>
+                    </p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

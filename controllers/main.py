@@ -2,9 +2,10 @@
 
 import json
 from odoo import http, fields, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, AccessError
 from odoo.http import request
 from odoo.addons.website_sale.controllers.main import WebsiteSale
+from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 
 
 class WebsiteEventTicketStore(WebsiteSale):
@@ -99,10 +100,12 @@ class WebsiteEventTicketStore(WebsiteSale):
             has_registrations = any(line.registration_ids for line in event_lines)
 
             if not has_registrations:
-                # Store the order ID in session for attendee collection
-                request.session['pending_attendee_order_id'] = order.id
-                # Don't reset the session yet - we need the order data for attendee collection
-                return request.redirect('/shop/event_attendees_post_payment')
+                # Generate access token for the order
+                token = order._generate_attendee_access_token()
+                # Send email reminder
+                self._send_attendee_details_reminder(order)
+                # Redirect to token-based URL
+                return request.redirect(order.get_attendee_details_url())
 
         # For non-event orders or orders with existing registrations, proceed normally
         request.website.sale_reset()
@@ -113,8 +116,8 @@ class WebsiteEventTicketStore(WebsiteSale):
 
     @http.route(['/shop/event_attendees_post_payment'], type='http', auth="public", methods=['GET', 'POST'], website=True, csrf=False)
     def event_attendees_post_payment(self, **kw):
-        """Event attendee collection after payment confirmation"""
-        # Get the order from session
+        """Event attendee collection after payment confirmation - DEPRECATED, use token-based route"""
+        # For backward compatibility, redirect to shop if no session order
         order_id = request.session.get('pending_attendee_order_id')
         if not order_id:
             return request.redirect('/shop')
@@ -123,10 +126,28 @@ class WebsiteEventTicketStore(WebsiteSale):
         if not order.exists():
             return request.redirect('/shop')
 
+        # Generate token and redirect to new URL
+        token = order._generate_attendee_access_token()
+        return request.redirect(order.get_attendee_details_url())
+
+    @http.route(['/my/orders/<int:order_id>/attendee-details/<string:access_token>'], type='http', auth="public", methods=['GET', 'POST'], website=True, csrf=False)
+    def order_attendee_details(self, order_id, access_token, **kw):
+        """Token-based attendee collection page"""
+        try:
+            order = self._get_order_with_token(order_id, access_token)
+        except (AccessError, ValidationError):
+            return request.redirect('/shop')
+
         # Check if there are any event products in the order
         event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
         if not event_lines:
             return request.redirect('/shop/confirmation')
+
+        # Check if already completed
+        has_registrations = any(line.registration_ids for line in event_lines)
+        if has_registrations:
+            # Already completed, redirect to order portal page
+            return request.redirect(order.get_portal_url())
 
         if request.httprequest.method == 'POST':
             # Process attendee data and create registrations
@@ -135,20 +156,35 @@ class WebsiteEventTicketStore(WebsiteSale):
             # Now confirm the order since we have attendee data
             order.with_context(skip_attendee_validation=True).action_confirm()
 
-            # Clear the pending order from session
-            request.session.pop('pending_attendee_order_id', None)
             # Store the order ID for confirmation page
             request.session['sale_last_order_id'] = order.id
-            # Reset the website sale session to clean up cart data
-            request.website.sale_reset()
             # Redirect to final confirmation
             return request.redirect('/shop/confirmation')
 
         # Render the post-payment attendee collection page
         values = {
             'website_sale_order': order,
+            'access_token': access_token,
         }
         return request.render('website_event_ticket_store.event_attendee_post_payment', values)
+
+    def _get_order_with_token(self, order_id, access_token):
+        """Get order and verify access token"""
+        order = request.env['sale.order'].sudo().browse(order_id)
+
+        if not order.exists():
+            raise ValidationError(_('Order not found'))
+
+        if not order.attendee_access_token or order.attendee_access_token != access_token:
+            raise AccessError(_('Invalid access token'))
+
+        return order
+
+    def _send_attendee_details_reminder(self, order):
+        """Send email reminder to complete attendee details"""
+        template = request.env.ref('website_event_ticket_store.mail_template_attendee_details_reminder', raise_if_not_found=False)
+        if template:
+            template.sudo().send_mail(order.id, force_send=True, email_values={'email_to': order.partner_id.email})
 
     def _process_event_attendee_data_from_checkout(self, order, form_data):
         """Process attendee data from checkout step and create event registrations"""
@@ -325,3 +361,50 @@ class WebsiteEventTicketStore(WebsiteSale):
                 answer_vals['value_text_box'] = answer_value
 
             request.env['event.registration.answer'].sudo().create(answer_vals)
+
+
+class EventTicketStorePortal(CustomerPortal):
+    """Portal controller for event ticket store"""
+
+    def _prepare_home_portal_values(self, counters):
+        """Add pending event registrations counter to portal"""
+        values = super()._prepare_home_portal_values(counters)
+
+        if 'pending_event_registrations_count' in counters:
+            # Count orders with pending attendee details
+            partner = request.env.user.partner_id
+            domain = [
+                ('partner_id', '=', partner.id),
+                ('state', 'in', ['draft', 'sent']),
+            ]
+
+            pending_count = 0
+            orders = request.env['sale.order'].search(domain)
+            for order in orders:
+                if order._has_pending_attendee_details():
+                    pending_count += 1
+
+            values['pending_event_registrations_count'] = pending_count
+
+        return values
+
+    @http.route(['/my/pending-registrations'], type='http', auth="user", website=True)
+    def portal_my_pending_registrations(self, **kw):
+        """Display orders with pending attendee details"""
+        partner = request.env.user.partner_id
+
+        # Find all orders with pending attendee details
+        domain = [
+            ('partner_id', '=', partner.id),
+            ('state', 'in', ['draft', 'sent']),
+        ]
+
+        orders = request.env['sale.order'].search(domain)
+        pending_orders = orders.filtered(lambda o: o._has_pending_attendee_details())
+
+        values = {
+            'pending_orders': pending_orders,
+            'page_name': 'pending_registrations',
+        }
+
+        return request.render('website_event_ticket_store.portal_my_pending_registrations', values)

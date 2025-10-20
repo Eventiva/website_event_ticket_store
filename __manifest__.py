@@ -27,7 +27,7 @@ Technical Details:
 * Maintains compatibility with existing event_sale module
     """,
     'author': 'Eventiva',
-    'website': 'https://www.eventiva.com',
+    'website': 'www.eventiva.com',
     'depends': [
         'website_sale',
         'event_sale',
@@ -36,9 +36,13 @@ Technical Details:
     'data': [
         'views/product_template_views.xml',
         'views/sale_order_line_views.xml',
+        'views/sale_order_views.xml',
         'views/event_event_views.xml',
         'views/event_templates.xml',
         'views/website_sale_templates.xml',
+        'views/portal_templates.xml',
+        'data/mail_template_data.xml',
+        'data/ir_cron_data.xml',
         'security/ir.model.access.csv',
     ],
     'test': [
@@ -48,5 +52,5 @@ Technical Details:
     'installable': True,
     'auto_install': False,
     'application': False,
-    'license': 'Other OSI approved licence',
+    'license': 'Other proprietary',
 }
