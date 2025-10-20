@@ -101,8 +101,11 @@
             <t t-set="orders" t-value="request.env['sale.order'].search(domain)" />
             <t t-foreach="orders" t-as="order">
                 <t t-if="order._has_pending_attendee_details()">
-                    <t t-set="pending_event_registrations_count"
-                        t-value="pending_event_registrations_count + 1" />
+                    <t t-set="tx" t-value="order.get_portal_last_transaction()" />
+                    <t t-if="tx and tx.state in ['done', 'authorized']">
+                        <t t-set="pending_event_registrations_count"
+                            t-value="pending_event_registrations_count + 1" />
+                    </t>
                 </t>
             </t>
 
