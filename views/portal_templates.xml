@@ -220,7 +220,7 @@
                                     <td>
                                         <t t-if="reg.state in ['open', 'done']">
                                             <a
-                                                t-attf-href="/event/{{ reg.event_id.id }}/my_tickets?registration_ids={{ reg.id }}&amp;tickets_hash={{ reg.event_id._get_tickets_access_hash([reg.id]) }}"
+                                                t-attf-href="/event/{{ reg.event_id.id }}/my_tickets?registration_ids=[{{ reg.id }}]&amp;tickets_hash={{ reg.event_id._get_tickets_access_hash([reg.id]) }}"
                                                 class="btn btn-sm btn-outline-primary"
                                                 target="_blank" title="Download Ticket">
                                                 <i class="fa fa-download me-1"></i>Download </a>
