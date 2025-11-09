@@ -63,10 +63,10 @@
         </template>
 
         <!-- Override Add to Cart Button for Event Products -->
-        <delete id="product_template_event_ticket_button" model="ir.ui.view"/>
+        <delete id="product_template_event_ticket_button" model="ir.ui.view" />
         <record id="product_template_event_ticket_button" model="ir.ui.view">
             <field name="name">Product Template Event Ticket Button</field>
-            <field name="inherit_id" ref="website_sale.cta_wrapper"/>
+            <field name="inherit_id" ref="website_sale.cta_wrapper" />
             <field name="arch" type="xml">
                 <xpath expr="//div[@id='add_to_cart_wrap']" position="inside">
                     <div class="w-100">
@@ -419,12 +419,13 @@
         </template>
 
         <!-- Override Product List Template to show event info -->
-        <delete id="product_template_event_list" model="ir.ui.view"/>
+        <delete id="product_template_event_list" model="ir.ui.view" />
         <record id="product_template_event_list" model="ir.ui.view">
             <field name="name">Product Template Event List</field>
-            <field name="inherit_id" ref="website_sale.products_item"/>
+            <field name="inherit_id" ref="website_sale.products_item" />
             <field name="arch" type="xml">
-                <xpath expr="//div[contains(@class, 'o_wsale_product_information_text')]" position="inside">
+                <xpath expr="//div[contains(@class, 'o_wsale_product_information_text')]"
+                    position="inside">
                     <div
                         t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
                         class="event-info-small mt-2">
@@ -432,7 +433,8 @@
                             <i class="fa fa-calendar"></i>
                             <span t-field="product.event_id.name" />
                             <span t-if="product.event_id.date_begin"> - <span
-                                    t-field="product.event_id.date_begin" t-options="{'widget': 'date'}" /></span>
+                                    t-field="product.event_id.date_begin"
+                                    t-options="{'widget': 'date'}" /></span>
                         </small>
                         <br />
                         <small class="text-muted">
@@ -440,7 +442,8 @@
                             <span t-field="product.product_variant_id.event_ticket_id.name" />
                             <span t-if="product.product_variant_id.event_ticket_id.seats_limited"
                                 class="badge badge-sm badge-info ms-1">
-                                <span t-esc="product.product_variant_id.event_ticket_id.seats_available" />
+                                <span
+                                    t-esc="product.product_variant_id.event_ticket_id.seats_available" />
                                 left </span>
                         </small>
                     </div>
