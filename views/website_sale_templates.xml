@@ -63,9 +63,10 @@
         </template>
 
         <!-- Override Add to Cart Button for Event Products -->
-        <template id="product_template_event_ticket_button" inherit_id="website_sale.product"
+        <delete id="product_template_event_ticket_button" model="ir.ui.view"/>
+        <template id="product_template_event_ticket_button" inherit_id="website_sale.cta_wrapper"
             name="Product Template Event Ticket Button">
-            <xpath expr="//t[@t-call='website_sale.cta_wrapper']" position="after">
+            <xpath expr="//div[@id='add_to_cart_wrap']" position="inside">
                 <div class="w-100">
                     <div
                         t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)"
