@@ -64,23 +64,26 @@
 
         <!-- Override Add to Cart Button for Event Products -->
         <delete id="product_template_event_ticket_button" model="ir.ui.view"/>
-        <template id="product_template_event_ticket_button" inherit_id="website_sale.cta_wrapper"
-            name="Product Template Event Ticket Button">
-            <xpath expr="//div[@id='add_to_cart_wrap']" position="inside">
-                <div class="w-100">
-                    <div
-                        t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)"
-                        class="alert alert-warning mt-2">
-                        <strong>Event Product:</strong> This product is not properly configured.
-                        Please contact the administrator. </div>
-                    <div
-                        t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id and not product.product_variant_id._is_event_ticket_available()"
-                        class="alert alert-danger mt-2">
-                        <strong>Sold Out:</strong> This event ticket is no longer available for
-                        purchase. </div>
-                </div>
-            </xpath>
-        </template>
+        <record id="product_template_event_ticket_button" model="ir.ui.view">
+            <field name="name">Product Template Event Ticket Button</field>
+            <field name="inherit_id" ref="website_sale.cta_wrapper"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@id='add_to_cart_wrap']" position="inside">
+                    <div class="w-100">
+                        <div
+                            t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)"
+                            class="alert alert-warning mt-2">
+                            <strong>Event Product:</strong> This product is not properly configured.
+                            Please contact the administrator. </div>
+                        <div
+                            t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id and not product.product_variant_id._is_event_ticket_available()"
+                            class="alert alert-danger mt-2">
+                            <strong>Sold Out:</strong> This event ticket is no longer available for
+                            purchase. </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
 
         <!-- Event Attendee Collection Checkout Step -->
         <template id="event_attendee_checkout" name="Event Attendee Checkout Step">
@@ -416,30 +419,34 @@
         </template>
 
         <!-- Override Product List Template to show event info -->
-        <template id="product_template_event_list" inherit_id="website_sale.products_item"
-            name="Product Template Event List">
-            <xpath expr="//form[hasclass('oe_product_cart')]" position="inside">
-                <div
-                    t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
-                    class="event-info-small mt-2">
-                    <small class="text-muted">
-                        <i class="fa fa-calendar"></i>
-                        <span t-field="product.event_id.name" />
-                        <span t-if="product.event_id.date_begin"> - <span
-                                t-field="product.event_id.date_begin" t-options="{'widget': 'date'}" /></span>
-                    </small>
-                    <br />
-                    <small class="text-muted">
-                        <i class="fa fa-ticket"></i>
-                        <span t-field="product.product_variant_id.event_ticket_id.name" />
-                        <span t-if="product.product_variant_id.event_ticket_id.seats_limited"
-                            class="badge badge-sm badge-info ml-1">
-                            <span t-esc="product.product_variant_id.event_ticket_id.seats_available" />
-                            left </span>
-                    </small>
-                </div>
-            </xpath>
-        </template>
+        <delete id="product_template_event_list" model="ir.ui.view"/>
+        <record id="product_template_event_list" model="ir.ui.view">
+            <field name="name">Product Template Event List</field>
+            <field name="inherit_id" ref="website_sale.products_item"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[contains(@class, 'o_wsale_product_information_text')]" position="inside">
+                    <div
+                        t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
+                        class="event-info-small mt-2">
+                        <small class="text-muted">
+                            <i class="fa fa-calendar"></i>
+                            <span t-field="product.event_id.name" />
+                            <span t-if="product.event_id.date_begin"> - <span
+                                    t-field="product.event_id.date_begin" t-options="{'widget': 'date'}" /></span>
+                        </small>
+                        <br />
+                        <small class="text-muted">
+                            <i class="fa fa-ticket"></i>
+                            <span t-field="product.product_variant_id.event_ticket_id.name" />
+                            <span t-if="product.product_variant_id.event_ticket_id.seats_limited"
+                                class="badge badge-sm badge-info ms-1">
+                                <span t-esc="product.product_variant_id.event_ticket_id.seats_available" />
+                                left </span>
+                        </small>
+                    </div>
+                </xpath>
+            </field>
+        </record>
 
         <!-- Override Cart Template to show event info -->
         <template id="cart_template_event_info" inherit_id="website_sale.cart_lines"
