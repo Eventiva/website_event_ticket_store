@@ -77,19 +77,23 @@ class WebsiteEventTicketStore(WebsiteSale):
             return request.redirect('/shop')
 
         if order and not order.amount_total and not tx_sudo:
-            if order.state != 'sale':
-                order._validate_order()
-
-            # Check if this is an event order that needs attendee collection
+            # Check if this is an event order that needs attendee collection (before validating)
             if order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
                 event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
                 has_registrations = any(line.registration_ids for line in event_lines)
 
                 if not has_registrations:
-                    # Store the order ID in session for attendee collection
-                    request.session['pending_attendee_order_id'] = order.id
-                    # Don't reset the session yet - we need the order data for attendee collection
-                    return request.redirect('/shop/event_attendees_post_payment')
+                    # Don't validate the order yet - we need attendee data first
+                    # Generate access token for the order
+                    token = order._generate_attendee_access_token()
+                    # Send email reminder
+                    self._send_attendee_details_reminder(order)
+                    # Redirect to token-based URL (same flow as paid orders)
+                    return request.redirect(order.get_attendee_details_url())
+
+            # For non-event orders or orders with existing registrations, validate and proceed
+            if order.state != 'sale':
+                order._validate_order()
 
             request.website.sale_reset()
             return request.redirect(order.get_portal_url())
@@ -143,9 +147,10 @@ class WebsiteEventTicketStore(WebsiteSale):
         if not event_lines:
             return request.redirect('/shop/confirmation')
 
-        # Enforce successful payment before attendee collection
+        # Enforce successful payment before attendee collection (or allow free orders)
         tx = order.get_portal_last_transaction()
-        if not (tx and tx.state in ['done', 'authorized']):
+        # Allow free orders (amount_total == 0) or orders with successful payment
+        if order.amount_total > 0 and not (tx and tx.state in ['done', 'authorized']):
             # Put order in session and redirect to payment
             request.session['sale_order_id'] = order.id
             return request.redirect('/shop/payment')
