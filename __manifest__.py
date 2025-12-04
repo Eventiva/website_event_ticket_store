@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Website Event Ticket Store',
-    'version': '1.2.1',
+    'version': '1.2.2',
     'category': 'Website/Website',
     'summary': 'Allow event tickets to be purchased from the website store',
     'description': """
