@@ -65,7 +65,7 @@
         <!-- Override Add to Cart Button for Event Products -->
         <template id="product_template_event_ticket_button" inherit_id="website_sale.product"
             name="Product Template Event Ticket Button">
-            <xpath expr="//form[@t-if='is_add_to_cart_possible']" position="after">
+            <xpath expr="//div[@id='contact_us_wrapper']" position="before">
                 <div
                     t-if="product.service_tracking == 'event' and (not product.event_id or not product.product_variant_id.event_ticket_id)"
                     class="alert alert-warning">
