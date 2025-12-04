@@ -7,4 +7,3 @@
         <delete id="website_event_ticket_store.product_template_event_ticket_button" model="ir.ui.view"/>
     </data>
 </odoo>
-
