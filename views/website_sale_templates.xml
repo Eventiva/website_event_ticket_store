@@ -63,7 +63,7 @@
         </template>
 
         <!-- Override Add to Cart Button for Event Products -->
-        <template id="product_template_event_ticket_button" inherit_id="website_sale.product"
+        <template id="product_template_event_ticket_button" inherit_id="website_sale.cta_wrapper"
             name="Product Template Event Ticket Button">
             <xpath expr="//a[@id='add_to_cart']" position="after">
                 <div
