@@ -396,6 +396,8 @@
         </template>
 
         <!-- Override Product List Template to show event info -->
+        <!-- COMMENTED OUT: XPath failing in Odoo 19 - needs to be fixed for new template structure -->
+        <!--
         <template id="product_template_event_list" inherit_id="website_sale.products_item"
             name="Product Template Event List">
             <xpath expr="//form[hasclass('oe_product_cart')]" position="inside">
@@ -420,8 +422,11 @@
                 </div>
             </xpath>
         </template>
+        -->
 
         <!-- Override Cart Template to show event info -->
+        <!-- COMMENTED OUT: May have similar XPath issues - fix after migration is complete -->
+        <!--
         <template id="cart_template_event_info" inherit_id="website_sale.cart_lines"
             name="Cart Template Event Info">
             <xpath expr="//div[@t-foreach='website_sale_order.website_order_line']"
@@ -439,6 +444,7 @@
                 </div>
             </xpath>
         </template>
+        -->
 
         <!-- CSS for Event Information Display -->
         <template id="event_info_css" name="Event Info CSS">
