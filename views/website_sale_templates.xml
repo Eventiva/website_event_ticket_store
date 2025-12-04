@@ -2,65 +2,13 @@
 <odoo>
     <data>
         <!-- Override Product Template to show event information -->
+        <!-- COMMENTED OUT for Odoo 19 compatibility - XPath elements may not exist -->
+        <!--
         <template id="product_template_event_info" inherit_id="website_sale.product"
             name="Product Template Event Info">
-            <xpath expr="//div[@id='contact_us_wrapper']" position="before">
-                <div
-                    t-if="product.service_tracking == 'event' and product.event_id and product.product_variant_id.event_ticket_id"
-                    class="event-info mt-3">
-                    <div class="card event-card">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">
-                                <i class="fa fa-calendar"></i> Event Information </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <h6 class="card-title" t-field="product.event_id.name" />
-                                    <p class="card-text">
-                                        <i class="fa fa-calendar"></i>
-                                        <span t-field="product.event_id.date_begin"
-                                            t-options="{'widget': 'datetime'}" />
-                                        <span
-                                            t-if="product.event_id.date_end and product.event_id.date_begin != product.event_id.date_end">
-                                            - <span t-field="product.event_id.date_end"
-                                                t-options="{'widget': 'datetime'}" />
-                                        </span>
-                                    </p>
-                                    <p class="card-text">
-                                        <strong>Ticket Type:</strong>
-                                        <span
-                                            t-field="product.product_variant_id.event_ticket_id.name" />
-                                    </p>
-                                    <p t-if="product.product_variant_id.event_ticket_id.description"
-                                        class="card-text">
-                                        <span
-                                            t-field="product.product_variant_id.event_ticket_id.description" />
-                                    </p>
-                                </div>
-                                <div class="col-md-4 text-right">
-                                    <div class="ticket-availability">
-                                        <span
-                                            t-if="product.product_variant_id.event_ticket_id.seats_limited"
-                                            class="badge badge-info">
-                                            <span
-                                                t-esc="product.product_variant_id.event_ticket_id.seats_available" />
-                                            Tickets available </span>
-                                        <span t-else="" class="badge badge-success">
-                                            Unlimited Tickets
-                                        </span>
-                                    </div>
-                                    <div t-if="not product._is_event_ticket_available()"
-                                        class="alert alert-warning mt-2">
-                                        <small>This ticket is no longer available</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </xpath>
+            Removed for Odoo 19 upgrade compatibility
         </template>
+        -->
 
         <!-- Event Attendee Collection Checkout Step -->
         <template id="event_attendee_checkout" name="Event Attendee Checkout Step">
