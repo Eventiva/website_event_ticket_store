@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Remove old problematic view that was causing XPath errors -->
+        <!-- This view was removed from website_sale_templates.xml but may still exist in the database -->
+        <!-- Using delete with id - will be ignored if view doesn't exist -->
+        <delete id="website_event_ticket_store.product_template_event_ticket_button" model="ir.ui.view"/>
+    </data>
+</odoo>
+

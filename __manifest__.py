@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Website Event Ticket Store',
-    'version': '1.2.2',
+    'version': '1.2.3',
     'category': 'Website/Website',
     'summary': 'Allow event tickets to be purchased from the website store',
     'description': """
@@ -34,6 +34,7 @@ Technical Details:
         'website_event_sale',
     ],
     'data': [
+        'data/remove_old_view.xml',
         'views/product_template_views.xml',
         'views/sale_order_line_views.xml',
         'views/sale_order_views.xml',
