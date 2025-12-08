@@ -69,9 +69,13 @@ class ProductTemplate(models.Model):
         # Check if this is a combo product by checking if it has combo items
         is_combo = False
         try:
-            if hasattr(self, 'combo_item_ids') and self.combo_item_ids:
-                is_combo = True
+            # Check for combo_item_ids field which exists on combo products
+            if hasattr(self, 'combo_item_ids'):
+                combo_items = self.combo_item_ids
+                if combo_items and len(combo_items) > 0:
+                    is_combo = True
         except Exception:
+            # If combo_item_ids doesn't exist or causes an error, try alternative check
             pass
         
         # If price is missing or 0, set it to list_price for combo products
@@ -84,9 +88,13 @@ class ProductTemplate(models.Model):
                 # Fallback to template's list_price if no product_id
                 price = self.list_price
             
-            # Always set the price, even if it's 0
+            # Always set the price from list_price if it exists
             # The actual price will be calculated from combo items when selected
-            if price is not None:
+            if price is not None and price != 0:
                 info['price'] = price
+            elif price == 0:
+                # Even if list_price is 0, set it to avoid "no price" error
+                # The configurator will calculate the actual price from combo items
+                info['price'] = 0.0
         
         return info
