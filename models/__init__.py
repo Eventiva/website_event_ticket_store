@@ -8,3 +8,4 @@ from . import event_event
 from . import event_event_ticket
 from . import website
 from . import payment_transaction
+from . import ir_ui_view_cleanup

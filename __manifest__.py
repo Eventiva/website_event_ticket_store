@@ -54,4 +54,5 @@ Technical Details:
     'auto_install': False,
     'application': False,
     'license': 'Other proprietary',
+    'post_init_hook': 'post_init_hook',
 }
