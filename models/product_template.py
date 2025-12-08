@@ -51,11 +51,14 @@ class ProductTemplate(models.Model):
 
     def _get_combination_info(self, combination=None, product_id=None, add_qty=1, parent_combination=None, only_template=None, **kwargs):
         """Override to ensure combo products have a valid price"""
+        # Odoo 19 doesn't accept parent_combination as a keyword argument
+        # Pass it through kwargs if provided
+        if parent_combination is not None:
+            kwargs['parent_combination'] = parent_combination
         info = super()._get_combination_info(
             combination=combination,
             product_id=product_id,
             add_qty=add_qty,
-            parent_combination=parent_combination,
             only_template=only_template,
             **kwargs
         )
