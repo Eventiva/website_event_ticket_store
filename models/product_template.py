@@ -48,3 +48,25 @@ class ProductTemplate(models.Model):
     def _get_saleable_tracking_types(self):
         """Extend saleable tracking types to include event products"""
         return super()._get_saleable_tracking_types() + ['event']
+
+    def _get_combination_info(self, combination=None, product_id=None, add_qty=1, parent_combination=None, only_template=None, **kwargs):
+        """Override to ensure combo products have a valid price"""
+        info = super()._get_combination_info(
+            combination=combination,
+            product_id=product_id,
+            add_qty=add_qty,
+            parent_combination=parent_combination,
+            only_template=only_template,
+            **kwargs
+        )
+        
+        # Ensure combo products have a valid price in the result
+        # For combo products, if price is 0/None, use list_price as fallback
+        # This allows the configurator to open even before combo items are selected
+        if product_id:
+            product = self.env['product.product'].browse(product_id)
+            if product.product_type == 'combo' and (not info.get('price') or info.get('price') == 0):
+                # Use list_price as the base price for combo products
+                info['price'] = product.list_price or 0
+        
+        return info
