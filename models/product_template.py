@@ -66,11 +66,14 @@ class ProductTemplate(models.Model):
         # Ensure combo products have a valid price in the result
         # For combo products, if price is 0/None, use list_price as fallback
         # This allows the configurator to open even before combo items are selected
-        if product_id:
-            product = self.env['product.product'].browse(product_id)
-            # Check product_type on the template, not the variant
-            if product.product_tmpl_id.product_type == 'combo' and (not info.get('price') or info.get('price') == 0):
-                # Use list_price as the base price for combo products
+        # Check if this is a combo product - use self.type since we're in product.template
+        if self.type == 'combo' and (not info.get('price') or info.get('price') == 0):
+            # Use list_price as the base price for combo products
+            if product_id:
+                product = self.env['product.product'].browse(product_id)
                 info['price'] = product.list_price or 0
+            else:
+                # Fallback to template's list_price if no product_id
+                info['price'] = self.list_price or 0
         
         return info
