@@ -68,7 +68,8 @@ class ProductTemplate(models.Model):
         # This allows the configurator to open even before combo items are selected
         if product_id:
             product = self.env['product.product'].browse(product_id)
-            if product.product_type == 'combo' and (not info.get('price') or info.get('price') == 0):
+            # Check product_type on the template, not the variant
+            if product.product_tmpl_id.product_type == 'combo' and (not info.get('price') or info.get('price') == 0):
                 # Use list_price as the base price for combo products
                 info['price'] = product.list_price or 0
         
