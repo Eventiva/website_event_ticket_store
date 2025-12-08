@@ -57,7 +57,7 @@ class WebsiteEventTicketStore(WebsiteSale):
     def shop_payment_validate(self, sale_order_id=None, **post):
         """Override to redirect to attendee collection for event orders after payment"""
         if sale_order_id is None:
-            order = request.website.sale_get_order()
+            order = request.cart
             if not order and 'sale_last_order_id' in request.session:
                 last_order_id = request.session['sale_last_order_id']
                 order = request.env['sale.order'].sudo().browse(last_order_id).exists()
@@ -285,7 +285,7 @@ class WebsiteEventTicketStore(WebsiteSale):
         """Process attendee data from form and create event registrations (legacy method)"""
 
         # Get the current sale order
-        sale_order = request.website.sale_get_order()
+        sale_order = request.cart
         if not sale_order:
             return
 
