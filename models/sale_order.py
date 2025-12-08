@@ -58,16 +58,20 @@ class SaleOrder(models.Model):
 
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
 
-    def _prepare_order_line_values(self, product_id, quantity, event_ticket_id=False, **kwargs):
+    def _prepare_order_line_values(self, product_id, quantity, uom_id=None, **kwargs):
         """Override to set event fields for our variant-based architecture"""
-        values = super()._prepare_order_line_values(product_id, quantity, event_ticket_id, **kwargs)
+        # Call parent method first - it will handle event_ticket_id from kwargs if present
+        values = super()._prepare_order_line_values(product_id, quantity, uom_id, **kwargs)
 
         # If this is an event product and we have a variant with event_ticket_id
+        # Only set from variant if event_ticket_id wasn't already set (standard registration flow)
         product = self.env['product.product'].browse(product_id)
         if product.service_tracking == 'event' and product.event_ticket_id:
-            # Set the event fields from our variant
-            values['event_id'] = product.product_tmpl_id.event_id.id
-            values['event_ticket_id'] = product.event_ticket_id.id
+            # Set the event fields from our variant (store flow)
+            # Don't override if event_ticket_id was already set from kwargs (standard flow)
+            if not values.get('event_ticket_id'):
+                values['event_id'] = product.product_tmpl_id.event_id.id
+                values['event_ticket_id'] = product.event_ticket_id.id
 
         return values
 
