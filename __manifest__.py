@@ -34,7 +34,6 @@ Technical Details:
         'website_event_sale',
     ],
     'data': [
-        'data/remove_old_view.xml',
         'views/product_template_views.xml',
         'views/sale_order_line_views.xml',
         'views/sale_order_views.xml',
@@ -54,5 +53,4 @@ Technical Details:
     'auto_install': False,
     'application': False,
     'license': 'Other proprietary',
-    'post_init_hook': 'post_init_hook',
 }
