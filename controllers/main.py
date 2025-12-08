@@ -16,42 +16,6 @@ class WebsiteEventTicketStore(WebsiteSale):
         # Simply call parent method without redirecting to attendee collection
         return super()._check_cart_and_addresses(order_sudo)
 
-    @http.route(['/shop/product/<model("product.template"):product>'], type='http', auth="public", website=True)
-    def product(self, product, category='', search='', **kwargs):
-        """Override product page to add event information"""
-        result = super().product(product, category, search, **kwargs)
-
-        # Add event information to the context
-        if hasattr(result, 'qcontext') and product.service_tracking == 'event':
-            result.qcontext['event_info'] = self._get_event_info_for_product(product)
-
-        return result
-
-    def _get_event_info_for_product(self, product):
-        """Get event information for a product to display on the website"""
-        if not product or product.service_tracking != 'event':
-            return None
-
-        if not product.event_id:
-            return None
-
-        # Get the first variant that has an event ticket
-        variant = product.product_variant_ids.filtered('event_ticket_id')[:1]
-        if not variant:
-            return None
-
-        return {
-            'event_name': product.event_id.name,
-            'event_date_begin': product.event_id.date_begin,
-            'event_date_end': product.event_id.date_end,
-            'ticket_name': variant.event_ticket_id.name,
-            'ticket_price': variant.event_ticket_id.price,
-            'ticket_price_reduce': variant.event_ticket_id.price_reduce,
-            'seats_available': variant.event_ticket_id.seats_available if variant.event_ticket_id.seats_limited else None,
-            'seats_limited': variant.event_ticket_id.seats_limited,
-            'ticket_description': variant.event_ticket_id.description or '',
-            'is_available': product._is_event_ticket_available(),
-        }
 
     @http.route(['/shop/payment/validate'], type='http', auth="public", website=True, sitemap=False)
     def shop_payment_validate(self, sale_order_id=None, **post):

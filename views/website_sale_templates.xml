@@ -395,6 +395,8 @@
         -->
 
         <!-- CSS for Event Information Display -->
+        <!-- COMMENTED OUT: To prevent any visual changes to product listing pages -->
+        <!--
         <template id="event_info_css" name="Event Info CSS">
             <style>
                 .event-card {
@@ -425,6 +427,7 @@
                 }
             </style>
         </template>
+        -->
 
     </data>
 </odoo>
