@@ -78,7 +78,18 @@ class SaleOrder(models.Model):
                 # Auto-generate attendee registrations from billing details
                 self._auto_generate_attendee_registrations()
 
-        return super().action_confirm()
+        # Call parent to confirm order (this may set registrations to 'open' in standard Odoo)
+        result = super().action_confirm()
+
+        # After confirmation, if attendee details are not completed, keep registrations as 'draft'
+        # This ensures auto-generated registrations stay as 'draft' until the form is submitted
+        if event_lines and not self.attendee_details_completed:
+            all_registrations = event_lines.mapped('registration_ids')
+            if all_registrations:
+                # Set all registrations back to 'draft' if attendee details not completed
+                all_registrations.sudo().write({'state': 'draft'})
+
+        return result
 
     def _auto_generate_attendee_registrations(self):
         """Auto-generate attendee registrations from billing user details
