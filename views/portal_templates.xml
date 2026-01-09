@@ -206,9 +206,23 @@
                                         <t t-out="reg.event_ticket_id.name" />
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary text-uppercase">
-                                            <t t-out="reg.state" />
-                                        </span>
+                                        <t t-if="reg.state == 'draft'">
+                                            <span class="badge bg-warning text-dark">Draft</span>
+                                        </t>
+                                        <t t-elif="reg.state == 'open'">
+                                            <span class="badge bg-success">Registered</span>
+                                        </t>
+                                        <t t-elif="reg.state == 'done'">
+                                            <span class="badge bg-info">Attended</span>
+                                        </t>
+                                        <t t-elif="reg.state == 'cancel'">
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge bg-secondary text-uppercase">
+                                                <t t-out="reg.state" />
+                                            </span>
+                                        </t>
                                     </td>
                                     <td>
                                         <a t-if="reg.sale_order_id"
