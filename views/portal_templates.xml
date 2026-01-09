@@ -271,8 +271,10 @@
         <xpath expr="//div[hasclass('o_portal_docs')]" position="after">
             <t t-set="event_registrations_count" t-value="0" />
             <t t-set="partner" t-value="request.env.user.partner_id" />
+            <t t-set="commercial_partner" t-value="partner.commercial_partner_id" />
+            <t t-set="related_partners" t-value="request.env['res.partner'].search([('commercial_partner_id', '=', commercial_partner.id)])" />
             <t t-set="registrations_domain"
-                t-value="[('sale_order_id.partner_id', '=', partner.id)]" />
+                t-value="[('sale_order_id.partner_id', 'in', related_partners.ids)]" />
             <t t-set="event_registrations_count"
                 t-value="request.env['event.registration'].sudo().search_count(registrations_domain)" />
 

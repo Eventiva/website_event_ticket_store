@@ -512,9 +512,15 @@ class EventTicketStorePortal(CustomerPortal):
 
         if 'event_registrations_count' in counters:
             partner = request.env.user.partner_id
-            # Count all registrations related to user's orders
+            # Get the commercial partner (parent company)
+            commercial_partner = partner.commercial_partner_id
+            # Find all partners that belong to the same commercial partner
+            related_partners = request.env['res.partner'].search([
+                ('commercial_partner_id', '=', commercial_partner.id)
+            ])
+            # Count all registrations related to orders from all partners under the same commercial partner
             registrations_domain = [
-                ('sale_order_id.partner_id', '=', partner.id),
+                ('sale_order_id.partner_id', 'in', related_partners.ids),
             ]
             values['event_registrations_count'] = request.env['event.registration'].sudo().search_count(registrations_domain)
 
@@ -552,11 +558,22 @@ class EventTicketStorePortal(CustomerPortal):
     def portal_my_registrations(self, page=1, **kw):
         """Display all event registrations linked to customer's orders"""
         from datetime import date, timedelta
-        
+
         partner = request.env.user.partner_id
         Registration = request.env['event.registration']
 
-        domain = [('sale_order_id.partner_id', '=', partner.id)]
+        # Get the commercial partner (parent company) - this is the company account
+        commercial_partner = partner.commercial_partner_id
+        
+        # Find all partners that belong to the same commercial partner (company)
+        # This includes the company itself and all child contacts/users
+        related_partners = request.env['res.partner'].search([
+            ('commercial_partner_id', '=', commercial_partner.id)
+        ])
+        related_partner_ids = related_partners.ids
+
+        # Filter registrations for all partners under the same commercial partner
+        domain = [('sale_order_id.partner_id', 'in', related_partner_ids)]
 
         # Simple pager
         total = Registration.sudo().search_count(domain)
@@ -568,7 +585,7 @@ class EventTicketStorePortal(CustomerPortal):
         # Add can_update_details flag to each registration (hide if event is within 7 days)
         today = date.today()
         cutoff_date = today + timedelta(days=7)
-        
+
         # Create a mapping of registration IDs to can_update_details flag
         can_update_map = {}
         for reg in registrations:
