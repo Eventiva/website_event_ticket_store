@@ -207,7 +207,7 @@
                                     </td>
                                     <td>
                                         <t t-if="reg.state == 'draft'">
-                                            <span class="badge bg-warning text-dark">Draft</span>
+                                            <span class="badge bg-warning text-dark">Unconfirmed</span>
                                         </t>
                                         <t t-elif="reg.state == 'open'">
                                             <span class="badge bg-success">Registered</span>

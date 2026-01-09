@@ -270,7 +270,7 @@ class WebsiteEventTicketStore(WebsiteSale):
                 'email': attendee_data.get('email', ''),
                 'phone': attendee_data.get('phone', ''),
                 'company_name': attendee_data.get('company_name', ''),
-                'state': 'draft',
+                'state': 'open',  # Set to 'open' (Registered) when form is submitted
             }
 
             _logger.info(f"Creating registration with vals: {vals}")
@@ -353,7 +353,7 @@ class WebsiteEventTicketStore(WebsiteSale):
                     'email': attendee_data.get('email', ''),
                     'phone': attendee_data.get('phone', ''),
                     'company_name': attendee_data.get('company_name', ''),
-                    'state': 'draft',
+                    'state': 'open',  # Set to 'open' (Registered) when form is submitted
                 }
 
                 # Update existing registration
