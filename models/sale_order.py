@@ -14,6 +14,11 @@ class SaleOrder(models.Model):
         copy=False,
         help='Token to access the attendee details page after payment'
     )
+    attendee_details_completed = fields.Boolean(
+        string='Attendee Details Completed',
+        default=False,
+        help='Indicates if the attendee details have been completed/updated by the customer'
+    )
 
     def _cart_update(self, product_id, line_id=None, add_qty=0, set_qty=0, **kwargs):
         """Override to handle event ticket validation and ensure event fields are set"""
@@ -93,6 +98,10 @@ class SaleOrder(models.Model):
         has_registrations = any(line.registration_ids for line in event_lines)
         if has_registrations:
             return
+
+        # Set attendee details as not completed and generate access token
+        self.attendee_details_completed = False
+        self._generate_attendee_access_token()
 
         # Get billing partner details
         partner = self.partner_id

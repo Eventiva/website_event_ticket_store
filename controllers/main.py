@@ -86,6 +86,10 @@ class WebsiteEventTicketStore(WebsiteSale):
                     # Auto-generate attendee registrations from billing details
                     order._auto_generate_attendee_registrations()
 
+                # Redirect to attendee details page if details are not completed
+                if not order.attendee_details_completed and order.attendee_access_token:
+                    return request.redirect(order.get_attendee_details_url())
+
             # Validate and proceed
             if order.state != 'sale':
                 order._validate_order()
@@ -101,6 +105,10 @@ class WebsiteEventTicketStore(WebsiteSale):
             if not has_registrations:
                 # Auto-generate attendee registrations from billing details
                 order._auto_generate_attendee_registrations()
+
+            # Redirect to attendee details page if details are not completed
+            if not order.attendee_details_completed and order.attendee_access_token:
+                return request.redirect(order.get_attendee_details_url())
 
         # Proceed normally (registrations are now auto-generated if needed)
         request.website.sale_reset()
@@ -146,29 +154,33 @@ class WebsiteEventTicketStore(WebsiteSale):
             request.session['sale_order_id'] = order.id
             return request.redirect('/shop/payment')
 
-        # Check if already completed
-        has_registrations = any(line.registration_ids for line in event_lines)
-        if has_registrations:
-            # Already completed, redirect to order portal page
-            return request.redirect(order.get_portal_url())
+        # Allow access if order has registrations (for editing) or if no registrations exist yet
+        # The token validation above ensures only authorized access
 
         if request.httprequest.method == 'POST':
-            # Process attendee data and create registrations
-            self._process_event_attendee_data_from_checkout(order, kw)
+            # Check if registrations already exist (from auto-generation)
+            event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+            has_registrations = any(line.registration_ids for line in event_lines)
 
-            # Now confirm the order since we have attendee data
-            order.with_context(skip_attendee_validation=True).action_confirm()
+            if has_registrations:
+                # Update existing registrations (order is already confirmed)
+                self._update_event_attendee_data_from_checkout(order, kw)
+            else:
+                # Create new registrations
+                self._process_event_attendee_data_from_checkout(order, kw)
+                # Now confirm the order since we have attendee data
+                order.with_context(skip_attendee_validation=True).action_confirm()
 
-            # If the order is paid and still 'to invoice', create and post the invoice now
-            try:
-                tx_check = order.get_portal_last_transaction()
-                if order.invoice_status == 'to invoice' and tx_check and tx_check.state in ['done', 'authorized']:
-                    invoices = order._create_invoices()
-                    if invoices:
-                        invoices.action_post()
-            except Exception:
-                # Avoid blocking the user flow; invoice can be generated manually if needed
-                pass
+                # If the order is paid and still 'to invoice', create and post the invoice now
+                try:
+                    tx_check = order.get_portal_last_transaction()
+                    if order.invoice_status == 'to invoice' and tx_check and tx_check.state in ['done', 'authorized']:
+                        invoices = order._create_invoices()
+                        if invoices:
+                            invoices.action_post()
+                except Exception:
+                    # Avoid blocking the user flow; invoice can be generated manually if needed
+                    pass
 
             # Store the order ID for confirmation page
             request.session['sale_last_order_id'] = order.id
@@ -271,6 +283,96 @@ class WebsiteEventTicketStore(WebsiteSale):
             self._process_event_question_answers(event_ticket.event_id, form_data, registration, attendee_counter)
 
             attendee_counter += 1
+
+    def _update_event_attendee_data_from_checkout(self, order, form_data):
+        """Update existing attendee registrations from form submission"""
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        _logger.info(f"Updating attendee data for order {order.id}")
+        _logger.info(f"Form data keys: {list(form_data.keys())}")
+
+        # Group attendees by order line ID
+        attendees_by_line = {}
+        attendee_counter = 1
+        while f"{attendee_counter}-event_ticket_id" in form_data:
+            event_ticket_id = form_data.get(f"{attendee_counter}-event_ticket_id")
+            sale_order_line_id = form_data.get(f"{attendee_counter}-sale_order_line_id")
+
+            if not event_ticket_id or not sale_order_line_id:
+                attendee_counter += 1
+                continue
+
+            line_id = int(sale_order_line_id)
+            if line_id not in attendees_by_line:
+                attendees_by_line[line_id] = []
+
+            attendees_by_line[line_id].append({
+                'counter': attendee_counter,
+                'event_ticket_id': int(event_ticket_id),
+            })
+            attendee_counter += 1
+
+        # Process each order line
+        for line_id, attendees in attendees_by_line.items():
+            order_line = request.env['sale.order.line'].browse(line_id)
+            if not order_line.exists():
+                continue
+
+            event_ticket = request.env['event.event.ticket'].browse(attendees[0]['event_ticket_id'])
+            if not event_ticket.exists():
+                continue
+
+            # Get existing registrations for this order line, sorted by ID to maintain order
+            existing_registrations = order_line.registration_ids.sorted('id')
+
+            # Process each attendee for this line
+            for idx, attendee_info in enumerate(attendees):
+                attendee_counter = attendee_info['counter']
+
+                # Extract attendee data from event questions
+                attendee_data = self._extract_attendee_data_from_questions(event_ticket.event_id, form_data, attendee_counter)
+
+                # If no attendee data was extracted from questions, try to get basic info from form
+                if not attendee_data:
+                    attendee_data = {
+                        'name': form_data.get(f"{attendee_counter}-name", ''),
+                        'email': form_data.get(f"{attendee_counter}-email", ''),
+                        'phone': form_data.get(f"{attendee_counter}-phone", ''),
+                        'company_name': form_data.get(f"{attendee_counter}-company_name", ''),
+                    }
+
+                # Prepare registration values
+                registration_vals = {
+                    'event_id': event_ticket.event_id.id,
+                    'event_ticket_id': event_ticket.id,
+                    'sale_order_id': order.id,
+                    'sale_order_line_id': order_line.id,
+                    'name': attendee_data.get('name', ''),
+                    'email': attendee_data.get('email', ''),
+                    'phone': attendee_data.get('phone', ''),
+                    'company_name': attendee_data.get('company_name', ''),
+                    'state': 'draft',
+                }
+
+                # Update existing registration
+                if idx < len(existing_registrations):
+                    registration = existing_registrations[idx]
+                    _logger.info(f"Updating registration {registration.id} for line {line_id}, attendee {attendee_counter}")
+
+                    # Clear existing answers before updating
+                    registration.registration_answer_ids.unlink()
+
+                    # Update registration
+                    registration.write(registration_vals)
+
+                    # Process event question answers
+                    self._process_event_question_answers(event_ticket.event_id, form_data, registration, attendee_counter)
+                else:
+                    _logger.warning(f"No existing registration found for line {line_id}, attendee {attendee_counter} - skipping")
+
+        # Mark attendee details as completed
+        order.attendee_details_completed = True
 
     def _process_event_attendee_data(self, product, form_data, quantity):
         """Process attendee data from form and create event registrations (legacy method)"""
