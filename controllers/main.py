@@ -315,7 +315,8 @@ class WebsiteEventTicketStore(WebsiteSale):
                 continue
 
             # Get existing registrations for this order line, sorted by ID to maintain order
-            existing_registrations = order_line.registration_ids.sorted('id')
+            # Use sudo() to ensure we can access registrations regardless of user permissions
+            existing_registrations = order_line.sudo().registration_ids.sorted('id')
 
             # Process each attendee for this line
             for idx, attendee_info in enumerate(attendees):
@@ -351,11 +352,11 @@ class WebsiteEventTicketStore(WebsiteSale):
                     registration = existing_registrations[idx]
                     _logger.info(f"Updating registration {registration.id} for line {line_id}, attendee {attendee_counter}")
 
-                    # Clear existing answers before updating
-                    registration.registration_answer_ids.unlink()
+                    # Clear existing answers before updating (use sudo for permissions)
+                    registration.sudo().registration_answer_ids.unlink()
 
-                    # Update registration
-                    registration.write(registration_vals)
+                    # Update registration (use sudo for permissions)
+                    registration.sudo().write(registration_vals)
 
                     # Process event question answers
                     self._process_event_question_answers(event_ticket.event_id, form_data, registration, attendee_counter)
