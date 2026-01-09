@@ -492,15 +492,17 @@ class EventTicketStorePortal(CustomerPortal):
             domain = [
                 ('partner_id', '=', partner.id),
                 ('state', 'in', ['draft', 'sent']),
+                ('order_line.product_id.service_tracking', '=', 'event'),
+                ('attendee_details_completed', '=', False),
             ]
 
             pending_count = 0
             orders = request.env['sale.order'].search(domain)
             for order in orders:
-                if order._has_pending_attendee_details():
-                    tx = order.get_portal_last_transaction()
-                    if tx and tx.state in ['done', 'authorized']:
-                        pending_count += 1
+                # Check if there's a successful payment transaction
+                tx = order.get_portal_last_transaction()
+                if tx and tx.state in ['done', 'authorized']:
+                    pending_count += 1
 
             values['pending_event_registrations_count'] = pending_count
 
@@ -523,15 +525,17 @@ class EventTicketStorePortal(CustomerPortal):
         domain = [
             ('partner_id', '=', partner.id),
             ('state', 'in', ['draft', 'sent']),
+            ('order_line.product_id.service_tracking', '=', 'event'),
+            ('attendee_details_completed', '=', False),
         ]
 
         orders = request.env['sale.order'].search(domain)
         pending_orders = request.env['sale.order']
         for o in orders:
-            if o._has_pending_attendee_details():
-                tx = o.get_portal_last_transaction()
-                if tx and tx.state in ['done', 'authorized']:
-                    pending_orders |= o
+            # Check if there's a successful payment transaction
+            tx = o.get_portal_last_transaction()
+            if tx and tx.state in ['done', 'authorized']:
+                pending_orders |= o
 
         values = {
             'pending_orders': pending_orders,

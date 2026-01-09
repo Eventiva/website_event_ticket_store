@@ -153,13 +153,13 @@ class SaleOrder(models.Model):
         return self.attendee_access_token
 
     def _has_pending_attendee_details(self):
-        """Check if this order has event tickets without attendee registrations"""
+        """Check if this order has event tickets with incomplete attendee details"""
         self.ensure_one()
         event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
         if not event_lines:
             return False
-        has_registrations = any(line.registration_ids for line in event_lines)
-        return not has_registrations and self.state in ('draft', 'sent')
+        # Pending if attendee details are not completed and order is in draft/sent state
+        return not self.attendee_details_completed and self.state in ('draft', 'sent')
 
     def get_attendee_details_url(self):
         """Get the URL to complete attendee details"""
@@ -200,7 +200,7 @@ class SaleOrder(models.Model):
         This finds orders that:
         - Have event products
         - Have successful payment (transaction in 'done' state)
-        - Don't have attendee registrations yet
+        - Have attendee_details_completed = False
         - Are in draft/sent state
         - Haven't received a reminder in the last 24 hours (optional)
         """
@@ -208,21 +208,20 @@ class SaleOrder(models.Model):
         domain = [
             ('state', 'in', ['draft', 'sent']),
             ('order_line.product_id.service_tracking', '=', 'event'),
+            ('attendee_details_completed', '=', False),
         ]
 
         orders = self.search(domain)
         orders_to_remind = self.env['sale.order']
 
         for order in orders:
-            # Check if this order has pending attendee details
-            if order._has_pending_attendee_details():
-                # Check if there's a successful payment transaction
-                tx = order.get_portal_last_transaction()
-                if tx and tx.state in ['done', 'authorized']:
-                    # Generate token if missing
-                    if not order.attendee_access_token:
-                        order._generate_attendee_access_token()
-                    orders_to_remind |= order
+            # Check if there's a successful payment transaction
+            tx = order.get_portal_last_transaction()
+            if tx and tx.state in ['done', 'authorized']:
+                # Generate token if missing
+                if not order.attendee_access_token:
+                    order._generate_attendee_access_token()
+                orders_to_remind |= order
 
         # Send reminder emails
         template = self.env.ref('website_event_ticket_store.mail_template_attendee_details_reminder', raise_if_not_found=False)
@@ -242,7 +241,7 @@ class SaleOrder(models.Model):
         This identifies orders that:
         - Have event products
         - Have successful payment
-        - Don't have attendee details
+        - Have attendee_details_completed = False
         - Don't have tokens (legacy orders)
 
         And generates tokens + sends reminder emails
@@ -250,6 +249,7 @@ class SaleOrder(models.Model):
         domain = [
             ('state', 'in', ['draft', 'sent']),
             ('order_line.product_id.service_tracking', '=', 'event'),
+            ('attendee_details_completed', '=', False),
             ('attendee_access_token', '=', False),  # No token yet
         ]
 
@@ -257,13 +257,12 @@ class SaleOrder(models.Model):
         fixed_orders = self.env['sale.order']
 
         for order in legacy_orders:
-            if order._has_pending_attendee_details():
-                # Check if there's a successful payment
-                tx = order.get_portal_last_transaction()
-                if tx and tx.state in ['done', 'authorized']:
-                    # Generate token
-                    order._generate_attendee_access_token()
-                    fixed_orders |= order
+            # Check if there's a successful payment
+            tx = order.get_portal_last_transaction()
+            if tx and tx.state in ['done', 'authorized']:
+                # Generate token
+                order._generate_attendee_access_token()
+                fixed_orders |= order
 
         # Send reminder emails for all fixed orders
         template = self.env.ref('website_event_ticket_store.mail_template_attendee_details_reminder', raise_if_not_found=False)
