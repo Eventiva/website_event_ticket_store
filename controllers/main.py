@@ -551,6 +551,8 @@ class EventTicketStorePortal(CustomerPortal):
     @http.route(['/my/registrations'], type='http', auth="user", website=True)
     def portal_my_registrations(self, page=1, **kw):
         """Display all event registrations linked to customer's orders"""
+        from datetime import date, timedelta
+        
         partner = request.env.user.partner_id
         Registration = request.env['event.registration']
 
@@ -563,8 +565,22 @@ class EventTicketStorePortal(CustomerPortal):
 
         registrations = Registration.sudo().search(domain, order='create_date desc', limit=step, offset=pager['offset'])
 
+        # Add can_update_details flag to each registration (hide if event is within 7 days)
+        today = date.today()
+        cutoff_date = today + timedelta(days=7)
+        
+        # Create a mapping of registration IDs to can_update_details flag
+        can_update_map = {}
+        for reg in registrations:
+            if reg.event_id and reg.event_id.date_begin:
+                event_date = reg.event_id.date_begin.date() if hasattr(reg.event_id.date_begin, 'date') else reg.event_id.date_begin
+                can_update_map[reg.id] = event_date > cutoff_date
+            else:
+                can_update_map[reg.id] = True  # Allow update if no event date
+
         values = {
             'registrations': registrations,
+            'can_update_map': can_update_map,
             'page_name': 'event_registrations',
             'pager': pager,
         }

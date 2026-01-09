@@ -233,7 +233,8 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <t t-if="reg.sale_order_id and reg.sale_order_id.attendee_access_token">
+                                            <t t-set="can_update" t-value="can_update_map.get(reg.id, True)" />
+                                            <t t-if="reg.sale_order_id and reg.sale_order_id.attendee_access_token and can_update">
                                                 <a t-attf-href="/my/orders/{{ reg.sale_order_id.id }}/attendee-details/{{ reg.sale_order_id.attendee_access_token }}"
                                                     class="btn btn-sm btn-outline-secondary"
                                                     title="Update Attendee Details">
@@ -246,7 +247,7 @@
                                                     target="_blank" title="Download Ticket">
                                                     <i class="fa fa-download me-1"></i>Download </a>
                                             </t>
-                                            <t t-if="reg.state not in ['open', 'done'] and (not reg.sale_order_id or not reg.sale_order_id.attendee_access_token)">
+                                            <t t-if="reg.state not in ['open', 'done'] and (not reg.sale_order_id or not reg.sale_order_id.attendee_access_token or not can_update)">
                                                 <span class="text-muted">Not available</span>
                                             </t>
                                         </div>
