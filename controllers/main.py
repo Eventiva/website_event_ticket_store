@@ -77,41 +77,32 @@ class WebsiteEventTicketStore(WebsiteSale):
             return request.redirect('/shop')
 
         if order and not order.amount_total and not tx_sudo:
-            # Check if this is an event order that needs attendee collection (before validating)
+            # Check if this is an event order - auto-generate registrations if missing
             if order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
                 event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
                 has_registrations = any(line.registration_ids for line in event_lines)
 
                 if not has_registrations:
-                    # Don't validate the order yet - we need attendee data first
-                    # Generate access token for the order
-                    token = order._generate_attendee_access_token()
-                    # Send email reminder
-                    self._send_attendee_details_reminder(order)
-                    # Redirect to token-based URL (same flow as paid orders)
-                    return request.redirect(order.get_attendee_details_url())
+                    # Auto-generate attendee registrations from billing details
+                    order._auto_generate_attendee_registrations()
 
-            # For non-event orders or orders with existing registrations, validate and proceed
+            # Validate and proceed
             if order.state != 'sale':
                 order._validate_order()
 
             request.website.sale_reset()
             return request.redirect(order.get_portal_url())
 
-        # Check if this is an event order that needs attendee collection (for paid orders)
+        # Check if this is an event order - auto-generate registrations if missing (for paid orders)
         if order and order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
             event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
             has_registrations = any(line.registration_ids for line in event_lines)
 
             if not has_registrations:
-                # Generate access token for the order
-                token = order._generate_attendee_access_token()
-                # Send email reminder
-                self._send_attendee_details_reminder(order)
-                # Redirect to token-based URL
-                return request.redirect(order.get_attendee_details_url())
+                # Auto-generate attendee registrations from billing details
+                order._auto_generate_attendee_registrations()
 
-        # For non-event orders or orders with existing registrations, proceed normally
+        # Proceed normally (registrations are now auto-generated if needed)
         request.website.sale_reset()
         if tx_sudo and tx_sudo.state == 'draft':
             return request.redirect('/shop')

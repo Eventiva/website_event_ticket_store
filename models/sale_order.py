@@ -58,23 +58,6 @@ class SaleOrder(models.Model):
 
         return super()._cart_update(product_id, line_id, add_qty, set_qty, **kwargs)
 
-    def _prepare_order_line_values(self, product_id, quantity, uom_id=None, **kwargs):
-        """Override to set event fields for our variant-based architecture"""
-        # Call parent method first - it will handle event_ticket_id from kwargs if present
-        values = super()._prepare_order_line_values(product_id, quantity, uom_id, **kwargs)
-
-        # If this is an event product and we have a variant with event_ticket_id
-        # Only set from variant if event_ticket_id wasn't already set (standard registration flow)
-        product = self.env['product.product'].browse(product_id)
-        if product.service_tracking == 'event' and product.event_ticket_id:
-            # Set the event fields from our variant (store flow)
-            # Don't override if event_ticket_id was already set from kwargs (standard flow)
-            if not values.get('event_ticket_id'):
-                values['event_id'] = product.product_tmpl_id.event_id.id
-                values['event_ticket_id'] = product.event_ticket_id.id
-
-        return values
-
     def action_confirm(self):
         """Override to validate event attendee data before confirmation"""
         # Skip validation if we're confirming after attendee data collection
@@ -87,26 +70,71 @@ class SaleOrder(models.Model):
             # Check if attendee data has been collected
             has_registrations = any(line.registration_ids for line in event_lines)
             if not has_registrations:
-                raise UserError(_(
-                    "Event attendee details must be collected before confirming this order. "
-                    "Please complete the attendee registration process."
-                ))
+                # Auto-generate attendee registrations from billing details
+                self._auto_generate_attendee_registrations()
 
         return super().action_confirm()
 
-    def _validate_order(self):
-        """Override to handle event orders that need attendee data collection"""
-        # For event orders without attendee data, don't validate yet
-        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
-        if event_lines:
-            has_registrations = any(line.registration_ids for line in event_lines)
-            if not has_registrations:
-                # Don't validate event orders without attendee data
-                # The order will be validated after attendee collection
-                return
+    def _auto_generate_attendee_registrations(self):
+        """Auto-generate attendee registrations from billing user details
 
-        # For non-event orders or event orders with attendee data, proceed normally
-        super()._validate_order()
+        Uses the billing partner information to create registrations:
+        - First attendee: Uses billing details directly
+        - Additional attendees: Appends "Guest 1", "Guest 2", etc. to the name
+        """
+        self.ensure_one()
+
+        # Get event order lines
+        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        if not event_lines:
+            return
+
+        # Check if registrations already exist
+        has_registrations = any(line.registration_ids for line in event_lines)
+        if has_registrations:
+            return
+
+        # Get billing partner details
+        partner = self.partner_id
+        billing_name = partner.name or ''
+        billing_email = partner.email or ''
+        billing_phone = partner.phone or partner.mobile or ''
+        billing_company = partner.commercial_partner_id.name if partner.commercial_partner_id else ''
+
+        _logger = logging.getLogger(__name__)
+        _logger.info(f"Auto-generating attendee registrations for order {self.id} from billing partner {partner.id}")
+
+        # Process each event line
+        for order_line in event_lines:
+            if not order_line.event_id or not order_line.event_ticket_id:
+                continue
+
+            # Get quantity for this line
+            quantity = int(order_line.product_uom_qty)
+
+            # Create one registration per quantity
+            for attendee_num in range(quantity):
+                # First attendee uses billing name directly, others append "Guest N"
+                if attendee_num == 0:
+                    attendee_name = billing_name
+                else:
+                    attendee_name = f"{billing_name} Guest {attendee_num}"
+
+                # Create registration
+                registration_vals = {
+                    'event_id': order_line.event_id.id,
+                    'event_ticket_id': order_line.event_ticket_id.id,
+                    'sale_order_id': self.id,
+                    'sale_order_line_id': order_line.id,
+                    'name': attendee_name,
+                    'email': billing_email,
+                    'phone': billing_phone,
+                    'company_name': billing_company,
+                    'state': 'draft',
+                }
+
+                _logger.info(f"Creating registration {attendee_num + 1} for line {order_line.id}: {attendee_name}")
+                self.env['event.registration'].sudo().create(registration_vals)
 
     def _generate_attendee_access_token(self):
         """Generate a unique access token for attendee details page"""

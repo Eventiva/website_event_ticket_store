@@ -7,7 +7,7 @@ class PaymentTransaction(models.Model):
     _inherit = 'payment.transaction'
 
     def _check_amount_and_confirm_order(self):
-        """Override to handle event orders differently - don't auto-confirm if attendee data is missing"""
+        """Override to handle event orders - auto-generate attendee registrations from billing details"""
         confirmed_orders = self.env['sale.order']
         for tx in self:
             # We only support the flow where exactly one quotation is linked to a transaction.
@@ -20,11 +20,10 @@ class PaymentTransaction(models.Model):
                         has_registrations = any(line.registration_ids for line in event_lines)
 
                         if not has_registrations:
-                            # Don't auto-confirm event orders without attendee data
-                            # The order will be confirmed later after attendee collection
-                            continue
+                            # Auto-generate attendee registrations from billing details
+                            quotation._auto_generate_attendee_registrations()
 
-                    # For non-event orders or event orders with attendee data, proceed normally
+                    # Proceed with confirmation (registrations are now auto-generated if needed)
                     quotation.with_context(send_email=True).action_confirm()
                     confirmed_orders |= quotation
         return confirmed_orders
