@@ -14,6 +14,12 @@
                     class="btn-primary"
                     invisible="state not in ('draft', 'sent')"
                     help="Send email reminder to customer to complete attendee details" />
+                <button name="action_fix_and_confirm_unconfirmed_event_orders"
+                    type="object"
+                    string="Fix &amp; Confirm Order"
+                    class="btn-secondary"
+                    invisible="state not in ('draft', 'sent') or attendee_details_completed"
+                    help="Auto-generate attendee registrations from billing details and confirm this order (only visible for event orders with incomplete attendee details)" />
             </xpath>
         </field>
     </record>
@@ -50,6 +56,19 @@
         <field name="code">
             if records:
             action = records.action_fix_legacy_pending_orders()
+        </field>
+    </record>
+
+    <!-- Server Action: Fix and Confirm Unconfirmed Event Orders -->
+    <record id="action_server_fix_and_confirm_unconfirmed_orders" model="ir.actions.server">
+        <field name="name">Fix &amp; Confirm Historic Event Orders</field>
+        <field name="model_id" ref="sale.model_sale_order" />
+        <field name="binding_model_id" ref="sale.model_sale_order" />
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            if records:
+            action = records.action_fix_and_confirm_unconfirmed_event_orders()
         </field>
     </record>
 

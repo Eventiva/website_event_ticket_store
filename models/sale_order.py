@@ -284,3 +284,68 @@ class SaleOrder(models.Model):
             }
         }
 
+    def action_fix_and_confirm_unconfirmed_event_orders(self):
+        """Admin utility to fix and confirm historic orders with payment but missing attendee details
+
+        This identifies orders that:
+        - Have event products
+        - Have successful payment
+        - Are in draft/sent state (not confirmed)
+        - Have attendee_details_completed = False
+
+        And:
+        - Auto-generates attendee registrations from billing details
+        - Confirms the orders
+        """
+        # If called from a specific record(s), use those; otherwise search for all matching orders
+        if self:
+            # Filter to only include orders that match the criteria
+            unconfirmed_orders = self.filtered(lambda o: (
+                o.state in ('draft', 'sent') and
+                o.order_line.filtered(lambda l: l.product_id.service_tracking == 'event') and
+                not o.attendee_details_completed
+            ))
+        else:
+            domain = [
+                ('state', 'in', ['draft', 'sent']),
+                ('order_line.product_id.service_tracking', '=', 'event'),
+                ('attendee_details_completed', '=', False),
+            ]
+            unconfirmed_orders = self.search(domain)
+
+        fixed_orders = self.env['sale.order']
+        confirmed_orders = self.env['sale.order']
+
+        for order in unconfirmed_orders:
+            # Check if there's a successful payment transaction
+            tx = order.get_portal_last_transaction()
+            if tx and tx.state in ['done', 'authorized']:
+                # Auto-generate attendee registrations from billing details
+                order._auto_generate_attendee_registrations()
+                fixed_orders |= order
+
+                # Confirm the order if it has registrations now
+                event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+                has_registrations = any(line.registration_ids for line in event_lines)
+                if has_registrations:
+                    try:
+                        order.with_context(skip_attendee_validation=True).action_confirm()
+                        confirmed_orders |= order
+                    except Exception as e:
+                        _logger = logging.getLogger(__name__)
+                        _logger.error(f'Failed to confirm order {order.id}: {str(e)}')
+
+        _logger = logging.getLogger(__name__)
+        _logger.info(f'Fixed and confirmed {len(confirmed_orders)} historic orders')
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Historic Orders Fixed'),
+                'message': _(f'{len(confirmed_orders)} order(s) have been fixed and confirmed. {len(fixed_orders) - len(confirmed_orders)} order(s) were processed but could not be confirmed.'),
+                'type': 'success' if confirmed_orders else 'warning',
+                'sticky': False,
+            }
+        }
+
