@@ -55,7 +55,7 @@ class WebsiteEventTicketStore(WebsiteSale):
 
     @http.route(['/shop/payment/validate'], type='http', auth="public", website=True, sitemap=False)
     def shop_payment_validate(self, sale_order_id=None, **post):
-        """Override to redirect to attendee collection for event orders after payment"""
+        """Override to handle event orders: auto-generate registrations and redirect to attendee details if needed"""
         if sale_order_id is None:
             order = request.cart
             if not order and 'sale_last_order_id' in request.session:
@@ -76,41 +76,32 @@ class WebsiteEventTicketStore(WebsiteSale):
         if not order or (order.amount_total and not tx_sudo):
             return request.redirect('/shop')
 
-        if order and not order.amount_total and not tx_sudo:
-            # Check if this is an event order - auto-generate registrations if missing
-            if order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
-                event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
-                has_registrations = any(line.registration_ids for line in event_lines)
-
-                if not has_registrations:
-                    # Auto-generate attendee registrations from billing details
-                    order._auto_generate_attendee_registrations()
-
-                # Redirect to attendee details page if details are not completed
-                if not order.attendee_details_completed and order.attendee_access_token:
-                    return request.redirect(order.get_attendee_details_url())
-
-            # Validate and proceed
-            if order.state != 'sale':
-                order._validate_order()
-
-            request.website.sale_reset()
-            return request.redirect(order.get_portal_url())
-
-        # Check if this is an event order - auto-generate registrations if missing (for paid orders)
-        if order and order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
-            event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        # Handle event orders: auto-generate registrations and confirm if needed
+        event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        if event_lines:
             has_registrations = any(line.registration_ids for line in event_lines)
 
             if not has_registrations:
                 # Auto-generate attendee registrations from billing details
                 order._auto_generate_attendee_registrations()
 
+            # Confirm the order if not already confirmed (for free orders or if payment handler didn't confirm)
+            if order.state != 'sale':
+                # Use _validate_order for consistency with standard flow (registrations already exist)
+                order._validate_order()
+
             # Redirect to attendee details page if details are not completed
             if not order.attendee_details_completed and order.attendee_access_token:
                 return request.redirect(order.get_attendee_details_url())
 
-        # Proceed normally (registrations are now auto-generated if needed)
+        # For free orders without event products, validate and proceed
+        if not order.amount_total and not tx_sudo:
+            if order.state != 'sale':
+                order._validate_order()
+            request.website.sale_reset()
+            return request.redirect(order.get_portal_url())
+
+        # Proceed normally for paid orders
         request.website.sale_reset()
         if tx_sudo and tx_sudo.state == 'draft':
             return request.redirect('/shop')
