@@ -106,9 +106,14 @@ class SaleOrder(models.Model):
         # Get billing partner details
         partner = self.partner_id
         billing_name = partner.name or ''
-        billing_email = partner.email or ''
-        billing_phone = partner.phone or partner.mobile or ''
-        billing_company = partner.commercial_partner_id.name if partner.commercial_partner_id else ''
+        billing_email = partner.email if partner.email else None
+        # Safely get phone - check if mobile field exists first
+        billing_phone = None
+        if partner.phone:
+            billing_phone = partner.phone
+        elif hasattr(partner, 'mobile') and partner.mobile:
+            billing_phone = partner.mobile
+        billing_company = partner.commercial_partner_id.name if partner.commercial_partner_id else None
 
         _logger = logging.getLogger(__name__)
         _logger.info(f"Auto-generating attendee registrations for order {self.id} from billing partner {partner.id}")
@@ -129,18 +134,27 @@ class SaleOrder(models.Model):
                 else:
                     attendee_name = f"{billing_name} Guest {attendee_num}"
 
-                # Create registration
+                # Create registration - only include fields if they exist
                 registration_vals = {
                     'event_id': order_line.event_id.id,
                     'event_ticket_id': order_line.event_ticket_id.id,
                     'sale_order_id': self.id,
                     'sale_order_line_id': order_line.id,
                     'name': attendee_name,
-                    'email': billing_email,
-                    'phone': billing_phone,
-                    'company_name': billing_company,
                     'state': 'draft',
                 }
+
+                # Only add email if it exists
+                if billing_email:
+                    registration_vals['email'] = billing_email
+
+                # Only add phone if it exists
+                if billing_phone:
+                    registration_vals['phone'] = billing_phone
+
+                # Only add company_name if it exists
+                if billing_company:
+                    registration_vals['company_name'] = billing_company
 
                 _logger.info(f"Creating registration {attendee_num + 1} for line {order_line.id}: {attendee_name}")
                 self.env['event.registration'].sudo().create(registration_vals)
