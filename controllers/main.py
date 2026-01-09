@@ -284,6 +284,9 @@ class WebsiteEventTicketStore(WebsiteSale):
 
             attendee_counter += 1
 
+        # Mark attendee details as completed
+        order.attendee_details_completed = True
+
     def _update_event_attendee_data_from_checkout(self, order, form_data):
         """Update existing attendee registrations from form submission"""
         import logging
