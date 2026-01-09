@@ -197,6 +197,9 @@
                                             <t t-foreach="range(int(order_line.product_uom_qty))"
                                                 t-as="att_counter">
                                                 <t t-set="counter" t-value="counter + 1" />
+                                                <!-- Get existing registration for this attendee position -->
+                                                <t t-set="line_registrations" t-value="existing_registrations_map.get(order_line.id, [])" />
+                                                <t t-set="existing_reg" t-value="line_registrations[att_counter] if att_counter &lt; len(line_registrations) else None" />
                                                 <div class="card mb-4">
                                                     <div class="card-header">
                                                         <h5 class="mb-0">
@@ -214,6 +217,14 @@
                                                             <t
                                                                 t-foreach="order_line.event_id.question_ids"
                                                                 t-as="question">
+                                                                <!-- Get existing answer for this question -->
+                                                                <t t-set="existing_answer" t-value="None" />
+                                                                <t t-if="existing_reg">
+                                                                    <t t-set="reg_answer" t-value="existing_reg.registration_answer_ids.filtered(lambda a: a.question_id.id == question.id)" />
+                                                                    <t t-if="reg_answer">
+                                                                        <t t-set="existing_answer" t-value="reg_answer[0]" />
+                                                                    </t>
+                                                                </t>
                                                                 <div class="col-lg-6 mt-2"
                                                                     t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
                                                                     <label t-out="question.title" />
@@ -222,10 +233,27 @@
                                                                         *</span>
                                                                     <t
                                                                         t-if="question.question_type in ['name', 'email', 'phone', 'company_name']">
+                                                                        <!-- Pre-fill from registration if available -->
+                                                                        <t t-set="field_value" t-value="" />
+                                                                        <t t-if="existing_reg">
+                                                                            <t t-if="question.question_type == 'name'">
+                                                                                <t t-set="field_value" t-value="existing_reg.name or ''" />
+                                                                            </t>
+                                                                            <t t-elif="question.question_type == 'email'">
+                                                                                <t t-set="field_value" t-value="existing_reg.email or ''" />
+                                                                            </t>
+                                                                            <t t-elif="question.question_type == 'phone'">
+                                                                                <t t-set="field_value" t-value="existing_reg.phone or ''" />
+                                                                            </t>
+                                                                            <t t-elif="question.question_type == 'company_name'">
+                                                                                <t t-set="field_value" t-value="existing_reg.company_name or ''" />
+                                                                            </t>
+                                                                        </t>
                                                                         <input class="form-control"
                                                                             t-att-type="input_type_by_question_type[question.question_type]"
                                                                             t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
-                                                                            t-att-required="question.is_mandatory_answer" />
+                                                                            t-att-required="question.is_mandatory_answer"
+                                                                            t-att-value="field_value" />
                                                                     </t>
                                                                     <t
                                                                         t-elif="question.question_type == 'simple_choice'">
@@ -239,7 +267,8 @@
                                                                                 t-as="answer">
                                                                                 <option
                                                                                     t-out="answer.name"
-                                                                                    t-att-value="answer.id" />
+                                                                                    t-att-value="answer.id"
+                                                                                    t-att-selected="existing_answer and existing_answer.value_answer_id.id == answer.id" />
                                                                             </t>
                                                                         </select>
                                                                     </t>
@@ -248,7 +277,8 @@
                                                                             class="form-control"
                                                                             t-att-name="str(counter) + '-' + question.question_type + '-' + str(question.id)"
                                                                             t-att-required="question.is_mandatory_answer"
-                                                                            rows="3"></textarea>
+                                                                            rows="3"
+                                                                            t-out="existing_answer and existing_answer.value_text_box or ''" />
                                                                     </t>
                                                                 </div>
                                                             </t>

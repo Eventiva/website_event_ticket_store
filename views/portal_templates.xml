@@ -232,16 +232,24 @@
                                         <t t-if="not reg.sale_order_id">-</t>
                                     </td>
                                     <td>
-                                        <t t-if="reg.state in ['open', 'done']">
-                                            <a
-                                                t-attf-href="/event/{{ reg.event_id.id }}/my_tickets?registration_ids=[{{ reg.id }}]&amp;tickets_hash={{ reg.event_id._get_tickets_access_hash([reg.id]) }}"
-                                                class="btn btn-sm btn-outline-primary"
-                                                target="_blank" title="Download Ticket">
-                                                <i class="fa fa-download me-1"></i>Download </a>
-                                        </t>
-                                        <t t-else="">
-                                            <span class="text-muted">Not available</span>
-                                        </t>
+                                        <div class="btn-group" role="group">
+                                            <t t-if="reg.sale_order_id and reg.sale_order_id.attendee_access_token">
+                                                <a t-attf-href="/my/orders/{{ reg.sale_order_id.id }}/attendee-details/{{ reg.sale_order_id.attendee_access_token }}"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    title="Update Attendee Details">
+                                                    <i class="fa fa-edit me-1"></i>Update Details </a>
+                                            </t>
+                                            <t t-if="reg.state in ['open', 'done']">
+                                                <a
+                                                    t-attf-href="/event/{{ reg.event_id.id }}/my_tickets?registration_ids=[{{ reg.id }}]&amp;tickets_hash={{ reg.event_id._get_tickets_access_hash([reg.id]) }}"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    target="_blank" title="Download Ticket">
+                                                    <i class="fa fa-download me-1"></i>Download </a>
+                                            </t>
+                                            <t t-if="reg.state not in ['open', 'done'] and (not reg.sale_order_id or not reg.sale_order_id.attendee_access_token)">
+                                                <span class="text-muted">Not available</span>
+                                            </t>
+                                        </div>
                                     </td>
                                 </tr>
                             </t>

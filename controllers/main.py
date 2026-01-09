@@ -178,10 +178,19 @@ class WebsiteEventTicketStore(WebsiteSale):
             # Redirect to final confirmation
             return request.redirect('/shop/confirmation')
 
+        # Prepare existing registration data for pre-filling the form
+        # Map order lines to their registrations (sorted by ID to maintain order)
+        existing_registrations_map = {}
+        for line in event_lines:
+            registrations = line.registration_ids.sorted('id')
+            if registrations:
+                existing_registrations_map[line.id] = registrations
+
         # Render the post-payment attendee collection page
         values = {
             'website_sale_order': order,
             'access_token': access_token,
+            'existing_registrations_map': existing_registrations_map,
         }
         return request.render('website_event_ticket_store.event_attendee_post_payment', values)
 
