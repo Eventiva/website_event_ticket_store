@@ -20,8 +20,8 @@ class TestEventTicketStore(TransactionCase):
         # Create test event
         self.event = self.env['event.event'].create({
             'name': 'Test Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create test event ticket
@@ -200,8 +200,8 @@ class TestEventTicketStore(TransactionCase):
             'event_id': climb26_event.id,
             'price': 100.0,
             'seats_max': 0,  # 0 = unlimited seats
-            'start_sale_datetime': '2025-07-02 00:00:00',  # Future sale start
-            'end_sale_datetime': '2025-10-01 00:00:00',    # Future sale end
+            'start_sale_datetime': '2026-02-01 00:00:00',  # Future sale start
+            'end_sale_datetime': '2026-06-30 00:00:00',    # Future sale end
         })
 
         # Create product for Standard Ticket
@@ -238,8 +238,8 @@ class TestEventTicketStore(TransactionCase):
             'event_id': future_event.id,
             'price': 100.0,
             'seats_max': 0,  # Unlimited
-            'start_sale_datetime': '2025-07-02 00:00:00',  # Future start
-            'end_sale_datetime': '2025-10-01 00:00:00',    # Future end
+            'start_sale_datetime': '2026-02-01 00:00:00',  # Future start
+            'end_sale_datetime': '2026-06-30 00:00:00',    # Future end
         })
 
         # Create product
@@ -260,8 +260,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         unlimited_event = self.env['event.event'].create({
             'name': 'Unlimited Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create ticket with unlimited seats
@@ -294,8 +294,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         limited_event = self.env['event.event'].create({
             'name': 'Limited Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create ticket with limited seats
@@ -328,8 +328,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         sold_out_event = self.env['event.event'].create({
             'name': 'Sold Out Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create ticket with limited seats
@@ -370,8 +370,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         expired_event = self.env['event.event'].create({
             'name': 'Expired Sale Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create ticket with expired sale period
@@ -402,8 +402,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         not_started_event = self.env['event.event'].create({
             'name': 'Not Started Sale Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create ticket with future sale start
@@ -443,9 +443,9 @@ class TestEventTicketStore(TransactionCase):
         ticket_types = [
             {'name': '1 Day Wednesday Ticket', 'price': 210.0, 'seats_max': 0, 'start_sale': None, 'end_sale': None},
             {'name': '1 Day Thursday Ticket', 'price': 210.0, 'seats_max': 0, 'start_sale': None, 'end_sale': None},
-            {'name': 'Startup Special Ticket', 'price': 400.0, 'seats_max': 100, 'start_sale': '2025-07-03 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
-            {'name': 'Standard Ticket', 'price': 400.0, 'seats_max': 0, 'start_sale': '2025-07-03 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
-            {'name': 'VIP Ticket', 'price': 600.0, 'seats_max': 0, 'start_sale': '2025-07-03 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
+            {'name': 'Startup Special Ticket', 'price': 400.0, 'seats_max': 100, 'start_sale': '2026-02-01 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
+            {'name': 'Standard Ticket', 'price': 400.0, 'seats_max': 0, 'start_sale': '2026-02-01 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
+            {'name': 'VIP Ticket', 'price': 600.0, 'seats_max': 0, 'start_sale': '2026-02-01 13:00:00', 'end_sale': '2026-07-02 18:00:00'},
             {'name': 'Investor Ticket', 'price': 600.0, 'seats_max': 0, 'start_sale': None, 'end_sale': None},
         ]
 
@@ -499,8 +499,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event with different ticket and product prices
         event = self.env['event.event'].create({
             'name': 'Pricing Test Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create event ticket with one price
@@ -548,8 +548,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         event = self.env['event.event'].create({
             'name': 'Discount Test Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create event ticket
@@ -605,8 +605,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event
         event = self.env['event.event'].create({
             'name': 'Variant Test Event',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create event ticket
@@ -656,8 +656,8 @@ class TestEventTicketStore(TransactionCase):
         # Create event (like Conference for Architects)
         event = self.env['event.event'].create({
             'name': 'Conference for Architects',
-            'date_begin': '2025-12-31 10:00:00',
-            'date_end': '2025-12-31 18:00:00',
+            'date_begin': '2026-12-31 10:00:00',
+            'date_end': '2026-12-31 18:00:00',
         })
 
         # Create VIP event ticket with $1500 price (like in demo data)
