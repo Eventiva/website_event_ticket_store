@@ -21,7 +21,7 @@ Features:
 
 Technical Details:
 ------------------
-* Extends sale.order.line to add proper event fields (not x_studio\_ fields)
+* Extends sale.order.line to add proper event fields (not x_studio fields)
 * Overrides website_sale cart logic to handle event ticket selection
 * Provides website templates for event ticket selection
 * Maintains compatibility with existing event_sale module
