@@ -11,6 +11,12 @@ class TestEventTicketStore(TransactionCase):
     def setUp(self):
         super().setUp()
 
+        # Create test partner (instead of relying on demo data)
+        self.partner = self.env['res.partner'].create({
+            'name': 'Test Customer',
+            'email': 'test@example.com',
+        })
+
         # Create test event
         self.event = self.env['event.event'].create({
             'name': 'Test Event',
@@ -38,7 +44,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create test sale order
         self.sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
     def test_product_event_configuration(self):
