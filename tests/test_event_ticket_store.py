@@ -344,7 +344,7 @@ class TestEventTicketStore(TransactionCase):
         self.env['event.registration'].create({
             'event_id': sold_out_event.id,
             'event_ticket_id': sold_out_ticket.id,
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
             'state': 'done',
         })
 
@@ -523,7 +523,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create sale order line
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
         line = self.env['sale.order.line'].create({
@@ -583,7 +583,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create sale order with pricelist
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
             'pricelist_id': pricelist.id,
         })
 
@@ -635,7 +635,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create sale order line
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
         line = self.env['sale.order.line'].create({
@@ -680,7 +680,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create sale order line
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
         line = self.env['sale.order.line'].create({
@@ -710,7 +710,7 @@ class TestEventTicketStore(TransactionCase):
         """Test that event orders cannot be confirmed without attendee registrations"""
         # Create sale order with event product
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
         # Add event product to order
@@ -755,7 +755,7 @@ class TestEventTicketStore(TransactionCase):
 
         # Create sale order with regular product
         sale_order = self.env['sale.order'].create({
-            'partner_id': self.env.ref('base.res_partner_1').id,
+            'partner_id': self.partner.id,
         })
 
         self.env['sale.order.line'].create({
