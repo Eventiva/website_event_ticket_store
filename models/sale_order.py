@@ -20,23 +20,41 @@ class SaleOrder(models.Model):
         help='Indicates if the attendee details have been completed/updated by the customer'
     )
 
-    def _cart_update(self, product_id, line_id=None, add_qty=0, set_qty=0, **kwargs):
-        """Override to handle event ticket validation and ensure event fields are set.
+    def _verify_updated_quantity(
+        self, order_line, product_id, new_qty, uom_id, *, event_slot_id=False, event_ticket_id=False, **kwargs
+    ):
+        """Allow increasing event ticket quantity in cart (bypass website_event_sale restriction).
 
-        When updating an existing event ticket line (line_id set), we pass event_ticket_id
-        in kwargs so website_event_sale's _verify_updated_quantity allows raising the
-        quantity (with seat availability check) instead of blocking with "You cannot
-        raise manually the event ticket quantity in your cart".
+        When updating an existing event ticket line from the cart (no event_ticket_id in kwargs),
+        website_event_sale blocks any quantity increase. For the ticket store we allow it by
+        passing the line's event_ticket_id/event_slot_id so the parent runs seat availability
+        checks but allows the new quantity.
         """
-        self.ensure_one()
+        if (
+            order_line
+            and order_line.event_ticket_id
+            and not event_ticket_id
+            and new_qty >= order_line.product_uom_qty
+        ):
+            # Cart is updating quantity on an event ticket line; pass ticket/slot so parent
+            # allows the increase and still runs seat availability checks.
+            event_slot_id = event_slot_id or (
+                order_line.event_slot_id.id if getattr(order_line, 'event_slot_id', None) else False
+            )
+            event_ticket_id = order_line.event_ticket_id.id
+        return super()._verify_updated_quantity(
+            order_line,
+            product_id,
+            new_qty,
+            uom_id,
+            event_slot_id=event_slot_id,
+            event_ticket_id=event_ticket_id,
+            **kwargs,
+        )
 
-        # Allow raising event ticket quantity in cart: pass event_ticket_id so the
-        # parent's _verify_updated_quantity uses seat-availability logic instead of
-        # blocking the update.
-        if line_id and 'event_ticket_id' not in kwargs:
-            line = self.order_line.filtered(lambda l: l.id == line_id)
-            if line and len(line) == 1 and line.event_ticket_id:
-                kwargs = dict(kwargs, event_ticket_id=line.event_ticket_id.id)
+    def _cart_update(self, product_id, line_id=None, add_qty=0, set_qty=0, **kwargs):
+        """Override to handle event ticket validation and ensure event fields are set"""
+        self.ensure_one()
 
         # Check if this is an event product
         product = self.env['product.product'].browse(product_id)
