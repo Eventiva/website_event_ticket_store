@@ -28,10 +28,10 @@ class WebsiteEventTicketStore(WebsiteSale):
         return result
 
     def _get_event_info_for_product(self, product):
-        """Get event information for a product to display on the website"""
+        """Get event information for a product to display on the website (sudo for public read of event.event.ticket)."""
         if not product or product.service_tracking != 'event':
             return None
-
+        product = product.sudo()
         if not product.event_id:
             return None
 
@@ -178,15 +178,15 @@ class WebsiteEventTicketStore(WebsiteSale):
             # Redirect to final confirmation
             return request.redirect('/shop/confirmation')
 
-        # Prepare existing registration data for pre-filling the form
+        # Prepare existing registration data for pre-filling the form (order is sudo so lines/registrations are readable by public)
         # Map order lines to their registrations (sorted by ID to maintain order)
         existing_registrations_map = {}
         for line in event_lines:
-            registrations = line.registration_ids.sorted('id')
+            registrations = line.sudo().registration_ids.sorted('id')
             if registrations:
                 existing_registrations_map[line.id] = registrations
 
-        # Render the post-payment attendee collection page
+        # Render the post-payment attendee collection page; order is sudo so template can read event_ticket_id etc.
         values = {
             'website_sale_order': order,
             'access_token': access_token,
@@ -236,9 +236,9 @@ class WebsiteEventTicketStore(WebsiteSale):
                 attendee_counter += 1
                 continue
 
-            # Get the order line and event ticket
-            order_line = request.env['sale.order.line'].browse(int(sale_order_line_id))
-            event_ticket = request.env['event.event.ticket'].browse(int(event_ticket_id))
+            # Get the order line and event ticket (sudo: public/portal user may not have read access)
+            order_line = request.env['sale.order.line'].sudo().browse(int(sale_order_line_id))
+            event_ticket = request.env['event.event.ticket'].sudo().browse(int(event_ticket_id))
 
             if not order_line.exists() or not event_ticket.exists():
                 _logger.warning(f"Order line or event ticket not found for attendee {attendee_counter}")
@@ -316,13 +316,13 @@ class WebsiteEventTicketStore(WebsiteSale):
             })
             attendee_counter += 1
 
-        # Process each order line
+        # Process each order line (sudo: public/portal user may not have read access)
         for line_id, attendees in attendees_by_line.items():
-            order_line = request.env['sale.order.line'].browse(line_id)
+            order_line = request.env['sale.order.line'].sudo().browse(line_id)
             if not order_line.exists():
                 continue
 
-            event_ticket = request.env['event.event.ticket'].browse(attendees[0]['event_ticket_id'])
+            event_ticket = request.env['event.event.ticket'].sudo().browse(attendees[0]['event_ticket_id'])
             if not event_ticket.exists():
                 continue
 
