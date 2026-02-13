@@ -156,7 +156,14 @@ class SaleOrder(models.Model):
             billing_phone = partner.phone
         elif hasattr(partner, 'mobile') and partner.mobile:
             billing_phone = partner.mobile
-        billing_company = partner.commercial_partner_id.name if partner.commercial_partner_id else None
+        # Only use commercial_partner_id.name when that partner is actually a company;
+        # for a person without a parent, commercial_partner_id is themselves, so .name
+        # would wrongly set company_name to the user's name.
+        comp = partner.commercial_partner_id
+        if comp and comp.is_company:
+            billing_company = comp.name
+        else:
+            billing_company = (getattr(partner, 'company_name', None) or '').strip()
 
         _logger = logging.getLogger(__name__)
         _logger.info(f"Auto-generating attendee registrations for order {self.id} from billing partner {partner.id}")
