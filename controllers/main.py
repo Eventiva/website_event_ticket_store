@@ -4,7 +4,14 @@ import json
 from odoo import http, fields, _
 from odoo.exceptions import ValidationError, AccessError
 from odoo.http import request
-from odoo.addons.website_sale.controllers.main import WebsiteSale
+try:
+    # When affiliate_management is installed, inherit its WebsiteSale so this module's
+    # overrides (e.g. /shop/product) call super() into affiliate (aff_key, PPC cookies),
+    # not only website_sale. Otherwise two sibling classes both extend base WebsiteSale
+    # and route registration/order can skip affiliate behaviour.
+    from odoo.addons.affiliate_management.controllers.main import WebsiteSale
+except ImportError:
+    from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 
 
