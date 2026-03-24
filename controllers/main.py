@@ -191,6 +191,9 @@ class WebsiteEventTicketStore(WebsiteSale):
             'website_sale_order': order,
             'access_token': access_token,
             'existing_registrations_map': existing_registrations_map,
+            # Same payload as /shop/confirmation so @website_sale/interactions/tracking fires purchase (gtag).
+            # May repeat on confirmation if the user completes this step (intentional duplicate for abandoners).
+            'order_tracking_info': self.order_2_return_dict(order),
         }
         return request.render('website_event_ticket_store.event_attendee_post_payment', values)
 

@@ -169,9 +169,16 @@
         <!-- Event Attendee Collection Post-Payment -->
         <template id="event_attendee_post_payment" name="Event Attendee Post Payment">
             <t t-call="website.layout">
-                <div class="container mt-4">
+                <!-- oe_website_sale: required for website_sale.tracking Interaction (purchase via gtag) -->
+                <div class="oe_website_sale container mt-4">
                     <div class="row justify-content-center">
                         <div class="col-lg-8">
+                            <div
+                                name="order_confirmation"
+                                class="d-none"
+                                t-att-data-order-id="website_sale_order.id"
+                                t-att-data-order-tracking-info="json.dumps(order_tracking_info)"
+                            ></div>
                             <div class="card">
                                 <div class="card-body">
                                     <div class="alert alert-success">
