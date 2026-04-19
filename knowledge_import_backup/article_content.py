@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+"""Knowledge CSV source: event ticket purchase and registrations (backup; not loaded by Odoo)."""
+
+FOLDER_NAME = "Event tickets — customer guides"
+FOLDER_IMPORT_EXTERNAL_ID = "__import__.wet_store_kb_folder"
+
+ARTICLE_SPECS = [
+    (
+        "kb_wet_01",
+        "wet_store_kb_buy_tickets",
+        "Buying event tickets on the website",
+        """
+<h2>What you are doing</h2>
+<p>
+Event tickets are sold like other products in the online shop. You add tickets to your basket, go through checkout,
+and pay (or complete a free order) like a normal purchase.
+</p>
+<h2>Finding the right ticket</h2>
+<p>
+Open the event or ticket page from the website navigation or a link you were given. The product page should show
+which event the ticket is for, and when it takes place. Choose the quantity you need and add it to your basket.
+</p>
+<h2>Checkout</h2>
+<p>
+Proceed to checkout and enter billing details as usual. You do not have to complete every attendee name during
+checkout; this site may collect attendee information after payment instead.
+</p>
+<h2>Payment</h2>
+<p>
+Pay with the offered payment methods. When payment succeeds, the system may take you to a separate step to enter
+who will actually attend, or send you a link to do that later.
+</p>
+""",
+    ),
+    (
+        "kb_wet_02",
+        "wet_store_kb_attendee_details",
+        "Completing attendee details after you pay",
+        """
+<h2>Why this step exists</h2>
+<p>
+Each ticket must be tied to a person (or seat) for the event. After your order is paid, you may be redirected to
+a page that asks for each attendee’s details, or you may receive an email with a link to complete them.
+</p>
+<h2>Using the link</h2>
+<p>
+The completion page uses a private link tied to your order. Keep it safe: anyone with the link can update those
+attendee details until your organisation’s rules say otherwise.
+</p>
+<h2>Filling the form</h2>
+<p>
+For each ticket, answer the questions the organisers configured (name, email, phone, company, custom questions).
+If the event uses structured questions, the answers are saved so the organisers can see them.
+</p>
+<h2>Editing later</h2>
+<p>
+If you already submitted details, you may be able to change them from the same link or from your account area
+under registrations, depending on how close the event is.
+</p>
+""",
+    ),
+    (
+        "kb_wet_03",
+        "wet_store_kb_pending_registrations",
+        "Pending registrations in your account",
+        """
+<h2>Where to look</h2>
+<p>
+Sign in and open your account area. If there is a section for pending event registrations or similar wording,
+open it. The web address may contain <code>/my/pending-registrations</code>.
+</p>
+<h2>What “pending” means here</h2>
+<p>
+You have an order for event tickets that is paid, but attendee details for those tickets are not finished yet.
+Complete the details so your registrations can be finalised.
+</p>
+<h2>What to do</h2>
+<p>
+Follow the link from that page to the attendee form for your order. Submit the form once each attendee is filled in.
+</p>
+""",
+    ),
+    (
+        "kb_wet_04",
+        "wet_store_kb_my_registrations",
+        "Your event registrations list",
+        """
+<h2>Where it is</h2>
+<p>
+Sign in to the website and open the area that lists your event registrations. The address often contains
+<code>/my/registrations</code>.
+</p>
+<h2>What you see</h2>
+<p>
+You should see registrations linked to orders for your company account (including colleagues under the same
+organisation, depending on how your contact records are set up).
+</p>
+<h2>Updating details</h2>
+<p>
+When the organisers allow changes, you may see an edit or update link next to a registration. There is often a
+cut-off a few days before the event starts; after that, changes may be disabled to keep the attendee list stable.
+</p>
+""",
+    ),
+    (
+        "kb_wet_05",
+        "wet_store_kb_free_orders",
+        "Free tickets and confirmation",
+        """
+<h2>Free orders</h2>
+<p>
+If the total amount is zero, the shop may still create an order and confirm it without a payment step. You may
+then be sent to attendee details or confirmation in the same way as for paid tickets.
+</p>
+<h2>Confirmation</h2>
+<p>
+After attendee details are complete when required, you should reach an order confirmation page. Keep any
+confirmation email for your records.
+</p>
+""",
+    ),
+]
