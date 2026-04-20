@@ -15,8 +15,8 @@ class PaymentTransaction(models.Model):
                 quotation = tx.sale_order_ids.filtered(lambda so: so.state in ('draft', 'sent'))
                 if quotation and quotation._is_confirmation_amount_reached():
                     # Check if this is an event order without attendee data
-                    if quotation.order_line.filtered(lambda line: line.product_id.service_tracking == 'event'):
-                        event_lines = quotation.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+                    if quotation._portal_event_order_lines():
+                        event_lines = quotation._portal_event_order_lines()
                         has_registrations = any(line.registration_ids for line in event_lines)
 
                         if not has_registrations:

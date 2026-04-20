@@ -63,11 +63,11 @@
                         </thead>
                         <tbody>
                             <t
-                                t-foreach="object.order_line.filtered(lambda l: l.product_id.service_tracking == 'event')"
+                                t-foreach="object._portal_event_order_lines()"
                                 t-as="line">
                                 <tr>
                                     <td style="padding: 8px; border: 1px solid #ddd;">
-                                        <t t-out="line.product_id.name" />
+                                        <t t-out="line.product_id.sudo().name" />
                                         <t t-if="line.event_id">
                                             <br />
                                             <small style="color: #666;">

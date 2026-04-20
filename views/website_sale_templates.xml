@@ -35,7 +35,7 @@
 
                     <!-- Process each event ticket in the cart -->
                     <t
-                        t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')"
+                        t-foreach="website_sale_order._portal_event_order_lines()"
                         t-as="order_line">
                         <t t-foreach="range(int(order_line.product_uom_qty))" t-as="att_counter">
                             <t t-set="counter" t-value="counter + 1" />
@@ -109,7 +109,7 @@
 
                     <!-- Global questions for the event -->
                     <div
-                        t-if="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                        t-if="website_sale_order._portal_event_order_lines()[:1].event_id.general_question_ids"
                         class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">
@@ -118,7 +118,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <t
-                                    t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                    t-foreach="website_sale_order._portal_event_order_lines()[:1].event_id.general_question_ids"
                                     t-as="question">
                                     <div class="mt-2"
                                         t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">
@@ -199,7 +199,7 @@
 
                                         <!-- Process each event ticket in the order -->
                                         <t
-                                            t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')"
+                                            t-foreach="website_sale_order._portal_event_order_lines()"
                                             t-as="order_line">
                                             <t t-foreach="range(int(order_line.product_uom_qty))"
                                                 t-as="att_counter">
@@ -314,7 +314,7 @@
 
                                         <!-- Global questions for the event -->
                                         <div
-                                            t-if="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                            t-if="website_sale_order._portal_event_order_lines()[:1].event_id.general_question_ids"
                                             class="card mb-4">
                                             <div class="card-header">
                                                 <h5 class="mb-0">
@@ -324,7 +324,7 @@
                                             <div class="card-body">
                                                 <div class="row">
                                                     <t
-                                                        t-foreach="website_sale_order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')[0].event_id.general_question_ids"
+                                                        t-foreach="website_sale_order._portal_event_order_lines()[:1].event_id.general_question_ids"
                                                         t-as="question">
                                                         <div class="mt-2"
                                                             t-att-class="question.question_type=='text_box' and 'col-lg-12' or 'col-lg-6'">

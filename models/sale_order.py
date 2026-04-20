@@ -85,7 +85,7 @@ class SaleOrder(models.Model):
                 # New line - find the most recently created line for this product
                 line = self.order_line.filtered(lambda l: l.product_id.id == product_id)[-1:]
 
-            if line and line.product_id.service_tracking == 'event':
+            if line and line.product_id.sudo().service_tracking == 'event':
                 line.write({
                     'event_id': product.product_tmpl_id.event_id.id,
                     'event_ticket_id': product.event_ticket_id.id,
@@ -102,7 +102,7 @@ class SaleOrder(models.Model):
             return super().action_confirm()
 
         # Check if there are event products in this order
-        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        event_lines = self._portal_event_order_lines()
         if event_lines:
             # Check if attendee data has been collected
             has_registrations = any(line.registration_ids for line in event_lines)
@@ -133,7 +133,7 @@ class SaleOrder(models.Model):
         self.ensure_one()
 
         # Get event order lines
-        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        event_lines = self._portal_event_order_lines()
         if not event_lines:
             return
 
@@ -216,10 +216,23 @@ class SaleOrder(models.Model):
             self.attendee_access_token = str(uuid.uuid4())
         return self.attendee_access_token
 
+    def _portal_event_order_lines(self):
+        """Lines for event-ticket products (website / portal / mail).
+
+        Portal and public users normally have **no** read access to ``product.product``; reading
+        ``line.product_id.service_tracking`` would raise an ACL error on ``/my/home`` and other
+        portal pages. Use ``sudo`` only for that product field read — order lines stay in the
+        current environment.
+        """
+        self.ensure_one()
+        return self.order_line.filtered(
+            lambda line: line.product_id.sudo().service_tracking == 'event'
+        )
+
     def _has_pending_attendee_details(self):
         """Check if this order has event tickets with incomplete attendee details"""
         self.ensure_one()
-        event_lines = self.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        event_lines = self._portal_event_order_lines()
         if not event_lines:
             return False
         # Pending if attendee details are not completed and order is in draft/sent state
@@ -366,7 +379,7 @@ class SaleOrder(models.Model):
             # Filter to only include orders that match the criteria
             unconfirmed_orders = self.filtered(lambda o: (
                 o.state in ('draft', 'sent') and
-                o.order_line.filtered(lambda l: l.product_id.service_tracking == 'event') and
+                o._portal_event_order_lines() and
                 not o.attendee_details_completed
             ))
         else:
@@ -389,7 +402,7 @@ class SaleOrder(models.Model):
                 fixed_orders |= order
 
                 # Confirm the order if it has registrations now
-                event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+                event_lines = order._portal_event_order_lines()
                 has_registrations = any(line.registration_ids for line in event_lines)
                 if has_registrations:
                     try:

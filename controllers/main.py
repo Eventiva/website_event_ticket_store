@@ -4,6 +4,7 @@ import json
 from odoo import http, fields, _
 from odoo.exceptions import ValidationError, AccessError
 from odoo.http import request
+from odoo.tools.translate import _lt
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 
@@ -77,7 +78,7 @@ class WebsiteEventTicketStore(WebsiteSale):
             return request.redirect('/shop')
 
         # Handle event orders: auto-generate registrations and confirm if needed
-        event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        event_lines = order._portal_event_order_lines()
         if event_lines:
             has_registrations = any(line.registration_ids for line in event_lines)
 
@@ -133,7 +134,7 @@ class WebsiteEventTicketStore(WebsiteSale):
             return request.redirect('/shop')
 
         # Check if there are any event products in the order
-        event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+        event_lines = order._portal_event_order_lines()
         if not event_lines:
             return request.redirect('/shop/confirmation')
 
@@ -150,7 +151,7 @@ class WebsiteEventTicketStore(WebsiteSale):
 
         if request.httprequest.method == 'POST':
             # Check if registrations already exist (from auto-generation)
-            event_lines = order.order_line.filtered(lambda line: line.product_id.service_tracking == 'event')
+            event_lines = order._portal_event_order_lines()
             has_registrations = any(line.registration_ids for line in event_lines)
 
             if has_registrations:
@@ -489,29 +490,51 @@ class WebsiteEventTicketStore(WebsiteSale):
 class EventTicketStorePortal(CustomerPortal):
     """Portal controller for event ticket store"""
 
+    def _portal_related_partner_ids(self, partner):
+        """All partners under the same commercial entity (same scope as /my/registrations)."""
+        partner = partner.sudo()
+        commercial_partner = partner.commercial_partner_id
+        return request.env['res.partner'].search([
+            ('commercial_partner_id', '=', commercial_partner.id),
+        ]).ids
+
+    def _get_sale_orders_pending_attendee_details(self, partner):
+        """Sale orders needing attendee completion; matches /my/registrations partner scope."""
+        SaleOrder = request.env['sale.order'].sudo()
+        domain = [
+            ('partner_id', 'in', self._portal_related_partner_ids(partner)),
+            ('state', 'in', ['draft', 'sent']),
+            ('order_line.product_id.service_tracking', '=', 'event'),
+            ('attendee_details_completed', '=', False),
+        ]
+        orders = SaleOrder.search(domain)
+        pending = SaleOrder.browse()
+        for order in orders:
+            if not order._has_pending_attendee_details():
+                continue
+            tx = order.get_portal_last_transaction()
+            if tx and tx.state in ('done', 'authorized'):
+                pending |= order
+        return pending
+
+    @http.route(['/my', '/my/home'], type='http', auth='user', website=True, list_as_website_content=_lt('User Dashboard'))
+    def home(self, **kw):
+        """Expose pending event order count for /my/home (same rules as /my/pending-registrations)."""
+        values = self._prepare_portal_layout_values()
+        values.update(self._prepare_home_portal_values([]))
+        partner = request.env.user.partner_id
+        pending = self._get_sale_orders_pending_attendee_details(partner)
+        values['portal_home_pending_event_order_count'] = len(pending)
+        return request.render('portal.portal_my_home', values)
+
     def _prepare_home_portal_values(self, counters):
         """Add pending event registrations counter to portal"""
         values = super()._prepare_home_portal_values(counters)
 
         if 'pending_event_registrations_count' in counters:
-            # Count orders with pending attendee details
             partner = request.env.user.partner_id
-            domain = [
-                ('partner_id', '=', partner.id),
-                ('state', 'in', ['draft', 'sent']),
-                ('order_line.product_id.service_tracking', '=', 'event'),
-                ('attendee_details_completed', '=', False),
-            ]
-
-            pending_count = 0
-            orders = request.env['sale.order'].search(domain)
-            for order in orders:
-                # Check if there's a successful payment transaction
-                tx = order.get_portal_last_transaction()
-                if tx and tx.state in ['done', 'authorized']:
-                    pending_count += 1
-
-            values['pending_event_registrations_count'] = pending_count
+            pending = self._get_sale_orders_pending_attendee_details(partner)
+            values['pending_event_registrations_count'] = len(pending)
 
         if 'event_registrations_count' in counters:
             partner = request.env.user.partner_id
@@ -533,27 +556,13 @@ class EventTicketStorePortal(CustomerPortal):
     def portal_my_pending_registrations(self, **kw):
         """Display orders with pending attendee details"""
         partner = request.env.user.partner_id
+        pending_orders = self._get_sale_orders_pending_attendee_details(partner)
 
-        # Find all orders with pending attendee details
-        domain = [
-            ('partner_id', '=', partner.id),
-            ('state', 'in', ['draft', 'sent']),
-            ('order_line.product_id.service_tracking', '=', 'event'),
-            ('attendee_details_completed', '=', False),
-        ]
-
-        orders = request.env['sale.order'].search(domain)
-        pending_orders = request.env['sale.order']
-        for o in orders:
-            # Check if there's a successful payment transaction
-            tx = o.get_portal_last_transaction()
-            if tx and tx.state in ['done', 'authorized']:
-                pending_orders |= o
-
-        values = {
+        values = self._prepare_portal_layout_values()
+        values.update({
             'pending_orders': pending_orders,
             'page_name': 'pending_registrations',
-        }
+        })
 
         return request.render('website_event_ticket_store.portal_my_pending_registrations', values)
 
@@ -598,10 +607,11 @@ class EventTicketStorePortal(CustomerPortal):
             else:
                 can_update_map[reg.id] = True  # Allow update if no event date
 
-        values = {
+        values = self._prepare_portal_layout_values()
+        values.update({
             'registrations': registrations,
             'can_update_map': can_update_map,
             'page_name': 'event_registrations',
             'pager': pager,
-        }
+        })
         return request.render('website_event_ticket_store.portal_my_registrations', values)

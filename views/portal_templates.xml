@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Breadcrumbs: base portal only knows addresses; add event registration pages. -->
+    <template id="portal_breadcrumbs_event_registrations" name="Portal breadcrumbs: event registrations"
+        inherit_id="portal.portal_breadcrumbs" priority="36">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'event_registrations'" class="breadcrumb-item active">
+                <span>Your Event Registrations</span>
+            </li>
+            <li t-if="page_name == 'pending_registrations'" class="breadcrumb-item active">
+                <span>Pending Event Registrations</span>
+            </li>
+        </xpath>
+    </template>
+
     <!-- Pending Event Registrations Portal Page -->
     <template id="portal_my_pending_registrations" name="My Pending Event Registrations">
         <t t-call="portal.portal_layout">
@@ -56,11 +69,11 @@
                                         <strong>Event Tickets:</strong>
                                         <ul class="list-unstyled mb-0 mt-2">
                                             <t
-                                                t-foreach="order.order_line.filtered(lambda l: l.product_id.service_tracking == 'event')"
+                                                t-foreach="order._portal_event_order_lines()"
                                                 t-as="line">
                                                 <li class="mb-2">
                                                     <i class="fa fa-ticket me-2 text-primary"></i>
-                                                    <span t-field="line.product_id.name" />
+                                                    <span t-out="line.product_id.sudo().name" />
                                                     <span class="badge bg-primary ms-2">
                                                         <t t-esc="int(line.product_uom_qty)" />
                                                         ticket<t t-if="line.product_uom_qty > 1">s</t>
@@ -94,30 +107,15 @@
         name="Portal My Home : Pending Event Registrations"
         inherit_id="portal.portal_my_home" priority="35">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
-            <t t-set="pending_event_registrations_count" t-value="0" />
-            <t t-set="partner" t-value="request.env.user.partner_id" />
-            <t t-set="domain"
-                t-value="[('partner_id', '=', partner.id), ('state', 'in', ['draft', 'sent'])]" />
-            <t t-set="orders" t-value="request.env['sale.order'].search(domain)" />
-            <t t-foreach="orders" t-as="order">
-                <t t-if="order._has_pending_attendee_details()">
-                    <t t-set="tx" t-value="order.get_portal_last_transaction()" />
-                    <t t-if="tx and tx.state in ['done', 'authorized']">
-                        <t t-set="pending_event_registrations_count"
-                            t-value="pending_event_registrations_count + 1" />
-                    </t>
-                </t>
-            </t>
-
-            <t t-if="pending_event_registrations_count > 0">
+            <t t-if="portal_home_pending_event_order_count">
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <h4 class="alert-heading">
                         <i class="fa fa-exclamation-triangle me-2"></i> Action Required: Complete
                         Your Event Registration </h4>
                     <p class="mb-2"> You have <strong>
-                            <t t-esc="pending_event_registrations_count" />
+                            <t t-esc="portal_home_pending_event_order_count" />
                         </strong>
-                        order<t t-if="pending_event_registrations_count > 1">s</t> waiting for
+                        order<t t-if="portal_home_pending_event_order_count > 1">s</t> waiting for
                         attendee details. </p>
                     <hr />
                     <p class="mb-0">
@@ -131,30 +129,20 @@
         </xpath>
     </template>
 
-    <!-- Add counter to portal sidebar -->
+    <!-- Full-width urgent tile: first in the docs grid (see EventTicketStorePortal.home). -->
     <template id="portal_my_home_pending_registrations"
         name="Portal My Home : Pending Registrations"
-        inherit_id="portal.portal_my_home" priority="35">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-set="partner" t-value="request.env.user.partner_id" />
-            <t t-set="domain"
-                t-value="[('partner_id', '=', partner.id), ('state', 'in', ['draft', 'sent'])]" />
-            <t t-set="orders" t-value="request.env['sale.order'].search(domain)" />
-            <t t-set="pending_count" t-value="0" />
-            <t t-foreach="orders" t-as="order">
-                <t t-if="order._has_pending_attendee_details()">
-                    <t t-set="pending_count" t-value="pending_count + 1" />
-                </t>
-            </t>
-
-            <t t-if="pending_count > 0">
+        inherit_id="portal.portal_my_home" priority="45">
+        <xpath expr="//div[hasclass('o_portal_docs')]/*[1]" position="before">
+            <t t-if="portal_home_pending_event_order_count">
                 <t t-call="portal.portal_docs_entry">
-                    <t t-set="icon"
-                        t-value="'/website_event_ticket_store/static/description/icon.png'" />
-                    <t t-set="title">Pending Event Registrations</t>
+                    <t t-set="config_card" t-value="True" />
+                    <t t-set="show_count" t-value="True" />
+                    <t t-set="bg_color" t-value="'alert alert-warning align-items-center border border-2 border-warning'" />
+                    <t t-set="title">Action required: complete event attendee details</t>
                     <t t-set="url" t-value="'/my/pending-registrations'" />
-                    <t t-set="text">Complete attendee details for your event tickets</t>
-                    <t t-set="count" t-value="pending_count" />
+                    <t t-set="text">One or more paid orders still need attendee names or information before the event.</t>
+                    <t t-set="count" t-value="portal_home_pending_event_order_count" />
                 </t>
             </t>
         </xpath>
@@ -265,10 +253,10 @@
         </t>
     </template>
 
-    <!-- Add Event Registrations card to portal -->
+    <!-- Same placement as Awards: first row of portal tiles (#portal_client_category), before Appointments. -->
     <template id="portal_my_home_event_registrations_entry"
         name="Portal My Home : Registrations Entry" inherit_id="portal.portal_my_home" priority="36">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="after">
+        <xpath expr="//div[@id='portal_client_category']/*[1]" position="before">
             <t t-set="event_registrations_count" t-value="0" />
             <t t-set="partner" t-value="request.env.user.partner_id" />
             <t t-set="commercial_partner" t-value="partner.commercial_partner_id" />
@@ -278,29 +266,14 @@
             <t t-set="event_registrations_count"
                 t-value="request.env['event.registration'].sudo().search_count(registrations_domain)" />
 
-            <div class="o_portal_category row g-2 mt-3" id="portal_event_registrations_category">
-                <div class="o_portal_index_card col-md-6 order-2">
-                    <a href="/my/registrations" title="Your Event Registrations"
-                        class="d-flex gap-2 gap-md-3 py-3 pe-2 px-md-3 h-100 rounded text-decoration-none bg-100">
-                        <div class="o_portal_icon d-block align-self-start">
-                            <i class="fa fa-ticket fa-2x text-primary"></i>
-                        </div>
-                        <div class="">
-                            <div class="mt-0 mb-1 fs-5 fw-normal lh-1 d-flex gap-2">
-                                <span>Your Event Registrations</span>
-                                <t t-if="event_registrations_count > 0">
-                                    <span class="badge bg-primary rounded-pill">
-                                        <t t-esc="event_registrations_count" />
-                                    </span>
-                                </t>
-                            </div>
-                            <div class="opacity-75">
-                                View and download your event tickets
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
+            <t t-call="portal.portal_docs_entry">
+                <!-- Odoo 19: entry is d-none unless config_card or force_show (see portal.portal_docs_entry). -->
+                <t t-set="config_card" t-value="True" />
+                <t t-set="title"
+                    t-value="'Your Event Registrations%s' % ((' (%s)' % event_registrations_count) if event_registrations_count else '')" />
+                <t t-set="url" t-value="'/my/registrations'" />
+                <t t-set="text">View and download your event tickets</t>
+            </t>
         </xpath>
     </template>
 
